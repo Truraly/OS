@@ -4,7 +4,8 @@
   "description": "读者和写者问题",
   "main": "index.js",
   "scripts": {
-    "test": "node -r esbuild-register index.ts"
+    "test": "node -r esbuild-register index.ts",
+    "readerAndWriter":"node -r esbuild-register ./test/readerAndWriter.ts"
   },
   "keywords": [],
   "author": "",

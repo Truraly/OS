@@ -36,7 +36,7 @@ export class PCB {
     }
   }
   /**
-   * 进程函数
+   * 进程函数列表
    * @param p 进程
    * @returns 0 阻塞
    * @returns 1 执行完毕
