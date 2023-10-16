@@ -1,9 +1,12 @@
 import chalk from "chalk";
-import { logger } from "./Logger";
-import { PCB } from "./PCB";
-import { ReadyList } from "./ReadyList";
-import { Semasphore } from "./Semasphore";
-import { ProcessLog } from "./ProcessLog";
+import {
+  logger,
+  PCB,
+  ReadyList,
+  Semasphore,
+  Message_buffer,
+  Primitives,
+} from "./OS";
 /**
  * 超时时间
  */
@@ -12,7 +15,6 @@ const TIME_OUT = 0;
  * 最大长度
  */
 const MAX_LENGTH = 8;
-ProcessLog.setMaxLength(MAX_LENGTH);
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -27,49 +29,55 @@ export async function start() {
   /**
    * 程序运行
    */
-  const readyList = new ReadyList();
   setSema_arr.forEach((v) => {
-    new Semasphore(v[1], v[0], readyList);
+    new Semasphore(v[1], v[0]);
   });
   logger.info("开始运行\n");
-  ProcessLog.printTitle();
+  PCB.printTitle();
   while (true) {
-    let ew: string = " add:";
+    let ew: string = "";
     // 计数器+1
     ++CPUtime;
-    if (!(await runtimefun(CPUtime, readyList))) {
+
+    if (!(await runtimefun(CPUtime))) {
+      // 推出程序
       // 打印进程状态
-      ProcessLog.printStatus(CPUtime, ew);
+      PCB.printStatus(CPUtime, ew);
       break;
     }
+
     // 输出就绪队列
-    logger.debug("就绪队列：", readyList.toString());
+    logger.debug("就绪队列：", ReadyList.Print());
     // 定时跳出
     if (CPUtime > TIME_OUT && TIME_OUT != 0) {
       logger.warn("进程执行超时");
-      //   logger.warn(test);
-      logger.warn(readyList);
+      logger.warn(ReadyList.readyList);
       break;
     }
-    readyList.sort();
+    // 排序
+    ReadyList.sort();
     // 执行进程
-    let length_ = readyList.length;
+    let length_ = ReadyList.len();
     for (let i = 0; i < length_; i++) {
-      let p: PCB = readyList.run();
+      let p: PCB = ReadyList.run();
       logger.debug("进程" + p.pname + "开始执行");
       p.run();
       logger.debug("进程" + p.pname + "执行完毕", p);
-      if (p.status == 3) {
-      } else if (p.status == 2) {
-      } else if (p.status == 1) {
-        readyList.rePush(p);
-      } else {
-        logger.error(p);
-        throw new Error("进程状态出错");
+      switch (p.status) {
+        case 3:
+          break;
+        case 2:
+          break;
+        case 1:
+          ReadyList.rePush(p);
+          break;
+        default:
+          logger.error(p);
+          throw new Error("进程状态出错");
       }
     }
     // 打印进程状态
-    ProcessLog.printStatus(CPUtime); //, ew);
+    PCB.printStatus(CPUtime, ew);
   }
 }
 /**
@@ -78,16 +86,11 @@ export async function start() {
  * @param r
  * @returns 是否结束 true:未结束 false:结束
  */
-let runtimefun: (c: number, r: ReadyList) => boolean | Promise<boolean> = (
-  c,
-  r
-) => {
+let runtimefun: (c: number) => boolean | Promise<boolean> = (c) => {
   throw new Error("未定义运行函数");
 };
 
-export function addruntimefun(
-  fun: (c: number, r: ReadyList) => boolean | Promise<boolean>
-) {
+export function addruntimefun(fun: (c: number) => boolean | Promise<boolean>) {
   runtimefun = fun;
 }
 

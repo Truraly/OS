@@ -1,38 +1,34 @@
-import { PCB } from "./PCB";
+import { logger, PCB, Semasphore, Message_buffer, Primitives } from "./OS";
 /**
  * 就绪列表类
  */
 export class ReadyList {
   /**
-   * 就绪列表
-   */
-  _list: Array<PCB> = new Array<PCB>();
-  /**
    * 排序
    */
-  sort() {
-    this._list.sort((a, b) => {
+  static sort() {
+    this.readyList.sort((a, b) => {
       return b.priority - a.priority;
     });
   }
   /**
    * 添加进程
    */
-  push(p: PCB) {
-    this._list.push(p);
+  static push(p: PCB) {
+    this.readyList.push(p);
     p.status = 0;
   }
   /**
    * 保持进程状态，进入就绪队列
    */
-  rePush(p: PCB) {
-    this._list.push(p);
+  static rePush(p: PCB) {
+    this.readyList.push(p);
   }
   /**
    * 取出进程
    */
-  shift(): PCB {
-    let p = this._list.shift();
+  static shift(): PCB {
+    let p = this.readyList.shift();
     if (!p) {
       throw new Error("就绪队列出错");
     }
@@ -43,19 +39,20 @@ export class ReadyList {
    * @param pid
    * @returns 进程指针
    */
-  findByPid(pid: string): PCB | undefined {
-    return this._list[this._list.findIndex((item) => item.pid == pid)];
+  static findByPid(pid: string): PCB | undefined {
+    return this.readyList[this.readyList.findIndex((item) => item.pid == pid)];
   }
   /**
    * 进程数量
    */
-  get length(): number {
-    return this._list.length;
+  static len(): number {
+    return this.readyList.length;
   }
   /**
    * 将就绪的进程输出进入运行状态
+   * @returns 进程
    */
-  run() {
+  static run() {
     let p = this.shift();
     p.status = 1;
     return p;
@@ -63,7 +60,11 @@ export class ReadyList {
   /**
    * 打印就绪队列
    */
-  toString(): string {
-    return this._list.map((item) => item.pname).join(",");
+  static Print(): string {
+    return ReadyList.readyList.map((item) => item.pname).join(",");
   }
+  /**
+   * 就绪队列
+   */
+  static readyList: Array<PCB> = new Array<PCB>();
 }

@@ -1,6 +1,5 @@
-import { logger } from "./Logger";
-import { ReadyList } from "./ReadyList";
-import { PCB } from "./PCB";
+import { logger, PCB, ReadyList, Message_buffer, Primitives } from "./OS";
+
 /**
  * 信号量类
  */
@@ -20,17 +19,13 @@ export class Semasphore {
    */
   queue: Array<PCB>;
   /**
-   * readyList
-   */
-  readyList: ReadyList;
-  /**
    * 构造函数
    * @param value 信号量值
+   * @param name 信号量名
    */
-  constructor(value: number, name: string, r: ReadyList) {
+  constructor(value: number, name: string) {
     this.value = value;
     this.name_ = name;
-    this.readyList = r;
     this.queue = new Array<PCB>();
     Semasphore.semasphoreList.push(this);
   }
@@ -62,7 +57,7 @@ export class Semasphore {
       let p = this.queue.shift();
       if (p) {
         logger.debug(p.pname, "被V操作唤醒");
-        this.readyList.push(p);
+        ReadyList.push(p);
       } else {
         throw new Error("信号量出错");
       }

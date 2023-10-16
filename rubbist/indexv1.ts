@@ -101,7 +101,7 @@ class semasphore {
       let p = this.queue.shift();
       if (p) {
         logger.debug(p.pname, "被V操作唤醒");
-        readyList_.push(p);
+        OS.ReadyList_.push(p);
       } else {
         throw new Error("信号量出错");
       }
@@ -190,7 +190,7 @@ class process_ {
 /**
  * 就绪列表类
  */
-class readyList {
+class OS.ReadyList {
   /**
    * 就绪列表
    */
@@ -334,7 +334,7 @@ let log = new Array<[string, number, number, string]>();
 /**
  * 程序运行
  */
-const readyList_ = new readyList();
+const OS.ReadyList_ = new OS.ReadyList();
 function main() {
   logger.info("开始运行\n");
   logger.info("|时间| 进程...");
@@ -349,14 +349,14 @@ function main() {
         item[3] as number,
         item[1] == "w" ? new Array(...writer) : new Array(...reader)
       );
-      readyList_.push(pp);
+      OS.ReadyList_.push(pp);
       logger.debug("进程" + pp.pname + "已载入");
       log.push([pp.pid, pp.status, 0, pp.pname]);
     });
     // 输出就绪队列
     logger.debug(
       "就绪队列：",
-      readyList_._list.map((item) => item.pname)
+      OS.ReadyList_._list.map((item) => item.pname)
     );
     // 定时跳出
     if (CPUtime > 30) {
@@ -364,7 +364,7 @@ function main() {
       break;
     }
     // 选择优先级最高的进程
-    readyList_.sort();
+    OS.ReadyList_.sort();
     // 重置log
     log.forEach((item) => {
       if (item[1] == 1) {
@@ -372,9 +372,9 @@ function main() {
       }
     });
     // 执行进程
-    let length_ = readyList_.length;
+    let length_ = OS.ReadyList_.length;
     for (let i = 0; i < length_; i++) {
-      let p: process_ = readyList_.join();
+      let p: process_ = OS.ReadyList_.join();
       logger.debug("进程" + p.pname + "开始执行");
       p.run();
       logger.debug("进程" + p.pname + "执行完毕", p);
@@ -383,7 +383,7 @@ function main() {
         log[log.findIndex((item) => item[0] == (p as process_).pid)][1] =
           p.status;
       } else if (p.status == 1) {
-        readyList_.push(p);
+        OS.ReadyList_.push(p);
       } else {
         throw new Error("进程状态出错");
       }

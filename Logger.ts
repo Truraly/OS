@@ -12,7 +12,7 @@ Log4js.configure({
   categories: {
     default: {
       appenders: ["OS"],
-        // level: "debug",
+    //   level: "debug",
       level: "info",
     },
   },
