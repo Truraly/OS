@@ -1,4 +1,6 @@
 import { logger } from "./Logger";
+import { Semasphore } from "./Semasphore";
+import { Message_buffer } from "./Message_buffer";
 import chalk from "chalk";
 
 export class PCB {
@@ -79,6 +81,7 @@ export class PCB {
     while (this.pid.length < 5) {
       this.pid += " ";
     }
+    PCB.PCBList.push(this);
   }
   /**
    * 获取颜色
@@ -92,5 +95,38 @@ export class PCB {
       chalk.blue.bgYellow.bold(" "),
       chalk.blue.bgGray.bold(" "),
     ][n];
+  }
+
+  /**
+   * 消息队列队首指针
+   */
+  front: Message_buffer | null;
+  /**
+   * 消息队列互斥信号量
+   */
+  mutex: Semasphore;
+  /**
+   * 消息队列非空信号量
+   * 0 阻塞
+   * 1 执行
+   */
+  sm: Semasphore;
+
+  /**
+   * 进程列表
+   */
+  static PCBList: Array<PCB> = new Array<PCB>();
+  /**
+   * 刷新进程列表，删除已删除进程
+   */
+  static flush() {
+    let length_ = PCB.PCBList.length;
+    for (let i = 0; i < length_; i++) {
+      if (PCB.PCBList[i].status == 4) {
+        PCB.PCBList.splice(i, 1);
+        i--;
+        length_--;
+      }
+    }
   }
 }

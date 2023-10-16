@@ -11,7 +11,7 @@ const TIME_OUT = 0;
 /**
  * 最大长度
  */
-const MAX_LENGTH = 12;
+const MAX_LENGTH = 8;
 ProcessLog.setMaxLength(MAX_LENGTH);
 
 /////////////////////////////////////////////////////////
