@@ -13,19 +13,32 @@ import {
  * @param a 消息缓冲区
  */
 export function send(PID: string, a: Message_buffer) {
-  // 根据a.size申请缓冲区（JS不需要做）
+  // 根据a.size申请缓冲区getbuf(a.size,i)（JS不需要做）
   // 复制a.text到缓冲区
-  let i: Message_buffer = new Message_buffer(a.sender, a.size, a.text);
+  let i: Message_buffer = {
+    sender: a.sender,
+    size: a.size,
+    text: a.text,
+    next: null,
+  };
   // 将发送区a.text的内容复制到接收区i.text中（JS不需要做）
   // 将i插入到进程PID的消息队列中
   let p: PCB | null = PCB.findByPid(PID);
   if (!p) {
     throw new Error("进程不存在");
   }
+  P(p.mutex, PCB.findByPid(a.sender) as PCB);
   if (p.front == null) {
     p.front = i;
   } else {
+    let temp: Message_buffer | null = p.front;
+    while (temp?.next != null) {
+      temp = temp.next;
+    }
+    temp.next = i;
   }
+  V(p.mutex);
+  V(p.sm);
 }
 
 /**

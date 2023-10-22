@@ -47,6 +47,8 @@ const reader: Array<(p: PCB) => number> = [
   (p) => {
     p.needTime--;
     if (p.needTime > 0) return 2;
+
+    Primitives.send(showp.pid, new Message_buffer(p.pid, 1, "读取完毕"));
     return 1;
   },
   (p) => {
@@ -62,35 +64,39 @@ const reader: Array<(p: PCB) => number> = [
     return 1;
   },
 ];
-/**
- * 读者写者进入时间
- * [id, type, time, sleeptime, status]
- * status 0:未执行，1:启动，2:阻塞，3:执行完毕
- */
-let test = [
-  [1, "w", 3, 5],
-  [2, "w", 16, 5],
-  [3, "r", 5, 2],
-  [4, "w", 6, 5],
-  [5, "r", 4, 3],
-  [6, "r", 11, 4],
-];
-logger.info(test);
 
-// let test: [number, string, number, number][] = new Array<
-//   [number, string, number, number]
-// >();
-// let nn = Math.floor(Math.random() * 30) + 5;
-// for (let i = 1; i < nn; i++) {
-//   // 随机读者写者
-//   let type = Math.random() > 0.6 ? "w" : "r";
-//   // 随机时间
-//   let time = Math.floor(Math.random() * i * 3) + i * 2;
-//   // 随机阻塞时间
-//   let sleeptime = Math.floor(Math.random() * 10) + 2;
-//   test.push([i, type, time, sleeptime]);
-// }
-// logger.info(test);
+///////////////////////////////////////////
+function s2(p: PCB) {
+  let msg = p.front?.sender + " " + p.front?.text;
+  if (msg == undefined) {
+    throw new Error("消息队列为空");
+  }
+  console.log(msg);
+  p.front = p.front?.next || null;
+  return 1;
+}
+
+function s1(p: PCB) {
+//   console.log("s1");
+//   console.log(p);
+  return p.sm.P(p) ? 1 : 0;
+}
+/**
+ * 显示进程
+ *    * @returns 0 阻塞
+ * @returns 1 执行完毕
+ * @returns 2 循环
+ */
+let showp = new PCB("show ", 1, [
+  s1,
+  s2,
+  (p) => {
+    p.funs.unshift(s2);
+    p.funs.unshift(s1);
+    return 2;
+  },
+]);
+ReadyList.push(showp);
 
 /**
  * 读者数量
@@ -98,33 +104,37 @@ logger.info(test);
 let readcount = 0;
 
 async function main(CPUtime: number): Promise<boolean> {
+  await sleep(500);
   let ew: string = "";
-    if (!PCB.getLogsEmpty()) return true;
+  //   console.log("PCB.getLogsEmpty()", PCB.getLogsEmpty());
+  //   console.log("PCB.PCBList", PCB.PCBList);
   // 载入就绪的进程
-  test.forEach((item) => {
-    // console.log(item);
-    if (!((item[2] as number) <= CPUtime)) return;
-    let type = item[1] as string;
-    //
-    let pname = type + CPUtime;
-    let sleeptime = item[3] as number;
-    // 删除超长的部分
-    pname = pname.slice(0, 4);
-    // 填充空格
-    while (pname.length < 5) pname += " ";
-    // 颜色
-    if (type == "w") {
-      pname = chalk.white.bgBlue.bold(pname);
-    } else {
-      pname = chalk.white.bgMagenta.bold(pname);
-    }
-    let pp: PCB = new PCB(pname, sleeptime, type == "w" ? writer : reader);
+  if (!PCB.getLogsEmpty()) return true;
+  // 随机数
+  if (Math.random() < 0.4) return true;
+  // 随机读者写者
+  let type = Math.random() > 0.5 ? "w" : "r";
+  // 随机阻塞时间
+  let sleeptime = Math.floor(Math.random() * 10) + 2;
+  //
+  let pname = type + CPUtime;
+  // 删除超长的部分
+  pname = pname.slice(0, 4);
+  // 填充空格
+  while (pname.length < 5) pname += " ";
+  // 颜色
+  if (type == "w") {
+    pname = chalk.white.bgBlue.bold(pname);
+  } else {
+    pname = chalk.white.bgMagenta.bold(pname);
+  }
+  let pp: PCB = new PCB(pname, sleeptime, type == "w" ? writer : reader);
 
-    ReadyList.push(pp);
-    test.splice(test.indexOf(item), 1);
-  });
-  // 结束
-  if (test.length == 0 && ReadyList.len() == 0) return false;
+  ReadyList.push(pp);
+  ew += pp.pname + "," + pp.needTime + " ";
+  // 添加到log
+  //   new ProcessLog(pp);
+
   return true;
 }
 import { start, addruntimefun, setSema } from "../index";
@@ -136,7 +146,7 @@ setSema("Wmutex", 1);
  * 读写“读者数量”信号量
  */
 setSema("Rmutex", 1);
-addruntimefun(main as any);
+addruntimefun(main);
 start();
 
 /**
