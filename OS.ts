@@ -4,5 +4,6 @@ import { ReadyList } from "./ReadyList";
 import { Semasphore } from "./Semasphore";
 import { Message_buffer } from "./Message_buffer";
 import * as Primitives from "./Primitives";
+import { CPU } from "./index";
 
-export { logger, PCB, ReadyList, Semasphore, Message_buffer, Primitives };
+export { logger, PCB, ReadyList, Semasphore, Message_buffer, Primitives,CPU };

@@ -5,9 +5,10 @@ import {
   Semasphore,
   Message_buffer,
   Primitives,
+  CPU
 } from "../OS";
 import chalk from "chalk";
-
+CPU.CPU_COUNT = 99;
 /**
  * 写者进程函数
  */

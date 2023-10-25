@@ -7,19 +7,22 @@ import {
   Message_buffer,
   Primitives,
 } from "./OS";
-/**
- * 超时时间
- */
-const TIME_OUT = 0;
-/**
- * 最大长度
- */
-const MAX_LENGTH = 8;
-/**
- * CPU数量
- */
-const CPU_COUNT = 99;
-// const CPU_COUNT = 1;
+
+export class CPU {
+  /**
+   * 超时时间
+   */
+  static TIME_OUT = 0;
+  /**
+   * 最大长度
+   */
+  static MAX_LENGTH = 6;
+  /**
+   * CPU数量
+   */
+  // const CPU_COUNT = 99;
+  static CPU_COUNT = 1;
+}
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -44,17 +47,10 @@ export async function start() {
     // 计数器+1
     ++CPUtime;
 
-    if (!(await runtimefun(CPUtime))) {
-      // 推出程序
-      // 打印进程状态
-      PCB.printStatus(CPUtime, ew);
-      break;
-    }
-
     // 输出就绪队列
     logger.debug("就绪队列：", ReadyList.Print());
     // 定时跳出
-    if (CPUtime > TIME_OUT && TIME_OUT != 0) {
+    if (CPUtime > CPU.TIME_OUT && CPU.TIME_OUT != 0) {
       logger.warn("进程执行超时");
       logger.warn(ReadyList.readyList);
       break;
@@ -64,16 +60,15 @@ export async function start() {
     // 执行进程
     let length_ = ReadyList.len();
     // 设置状态为阻塞
-    PCB.PCBStatusList.map((v) => {
-      v = 6;
-    });
+    // for(let )
+    // console.log(PCB.PCBStatusList);
 
-    for (let i = 0; i < length_ && i < CPU_COUNT; i++) {
+    for (let i = 0; i < length_ && i < CPU.CPU_COUNT; i++) {
       //   console.log(i);
       let p: PCB = ReadyList.run();
       logger.debug("进程" + p.pname + "开始执行");
       p.run();
-    //   ew += "运行进程" + p.pname + "优先级" + p.priority 
+      ew += "运行进程" + p.pname + "优先级" + p.priority + "|";
       logger.debug("进程" + p.pname + "执行完毕", p);
       switch (p.status) {
         case 3:
@@ -90,6 +85,12 @@ export async function start() {
     }
     // 打印进程状态
     PCB.printStatus(CPUtime, ew);
+    if (!(await runtimefun(CPUtime))) {
+      // 推出程序
+      // 打印进程状态
+      PCB.printStatus(CPUtime, ew);
+      break;
+    }
   }
 }
 /**
