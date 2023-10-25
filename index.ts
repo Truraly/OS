@@ -15,6 +15,11 @@ const TIME_OUT = 0;
  * 最大长度
  */
 const MAX_LENGTH = 8;
+/**
+ * CPU数量
+ */
+const CPU_COUNT = 99;
+// const CPU_COUNT = 1;
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -58,10 +63,17 @@ export async function start() {
     ReadyList.sort();
     // 执行进程
     let length_ = ReadyList.len();
-    for (let i = 0; i < length_; i++) {
+    // 设置状态为阻塞
+    PCB.PCBStatusList.map((v) => {
+      v = 6;
+    });
+
+    for (let i = 0; i < length_ && i < CPU_COUNT; i++) {
+      //   console.log(i);
       let p: PCB = ReadyList.run();
       logger.debug("进程" + p.pname + "开始执行");
       p.run();
+    //   ew += "运行进程" + p.pname + "优先级" + p.priority 
       logger.debug("进程" + p.pname + "执行完毕", p);
       switch (p.status) {
         case 3:
