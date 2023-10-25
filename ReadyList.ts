@@ -1,4 +1,12 @@
-import { logger, PCB, Semasphore, Message_buffer, Primitives } from "./OS";
+import {
+  logger,
+  PCB,
+  Semasphore,
+  Message_buffer,
+  Primitives,
+  PStatus,
+} from "./OS";
+import { P } from "./Primitives";
 /**
  * 就绪列表类
  */
@@ -16,7 +24,7 @@ export class ReadyList {
    */
   static push(p: PCB) {
     this.readyList.push(p);
-    p.status = 0;
+    p.showStatus = p.status = PStatus.ready;
   }
   /**
    * 保持进程状态，进入就绪队列
@@ -54,7 +62,7 @@ export class ReadyList {
    */
   static run() {
     let p = this.shift();
-    p.status = 1;
+    p.showStatus = p.status = PStatus.run;
     return p;
   }
   /**

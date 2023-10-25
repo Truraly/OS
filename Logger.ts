@@ -19,3 +19,4 @@ Log4js.configure({
 });
 
 export const logger = Log4js.getLogger("OS");
+logger.info("-----------------------------------------------------------");

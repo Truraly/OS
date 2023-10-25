@@ -1,4 +1,11 @@
-import { logger, PCB, ReadyList, Message_buffer, Primitives } from "./OS";
+import {
+  logger,
+  PCB,
+  ReadyList,
+  Message_buffer,
+  Primitives,
+  PStatus,
+} from "./OS";
 
 /**
  * 信号量类
@@ -30,40 +37,6 @@ export class Semasphore {
     Semasphore.semasphoreList.push(this);
   }
   /**
-   * P操作，返回是否执行
-   * @param p 进程
-   * @returns true 执行
-   * @returns false 阻塞
-   */
-  P(p: PCB): boolean {
-    logger.debug(p.pname, "P操作", this.name_);
-    this.value--;
-    if (this.value < 0) {
-      this.queue.push(p);
-      p.status = 2;
-      logger.debug(p.pname, "P操作阻塞", this);
-      return false;
-    }
-    logger.debug(p.pname, "P操作", this.name_, "成功");
-    return true;
-  }
-  /**
-   * V操作
-   */
-  V(p: PCB): void {
-    logger.debug(p.pname, "V操作", this.name_);
-    this.value++;
-    if (this.value <= 0) {
-      let p = this.queue.shift();
-      if (p) {
-        logger.debug(p.pname, "被V操作唤醒");
-        ReadyList.push(p);
-      } else {
-        throw new Error("信号量出错");
-      }
-    }
-  }
-  /**
    * 信号量列表
    */
   static semasphoreList: Array<Semasphore> = new Array<Semasphore>();
@@ -83,3 +56,37 @@ export class Semasphore {
     throw new Error("信号量出错");
   }
 }
+
+//   /**
+//    * P操作，返回是否执行
+//    * @param p 进程
+//    * @returns true 执行
+//    * @returns false 阻塞
+//    */
+//   P(p: PCB): boolean {
+//     logger.debug(p.pname, "P操作", this.name_);
+//     this.value--;
+//     if (this.value < 0) {
+//       this.queue.push(p);
+//       p.status = PStatus.block;
+//       logger.debug(p.pname, "P操作阻塞", this);
+//       return false;
+//     }
+//     logger.debug(p.pname, "P操作", this.name_, "成功");
+//     return true;
+//   }
+//   /**
+//    * V操作
+//    */
+//   V(p: PCB): void {
+//     logger.debug(p.pname, "V操作", this.name_);
+//     this.value++;
+//     if (this.value <= 0) {
+//       let p = this.queue.shift();
+//       if (p) {
+//         logger.debug(p.pname, "被V操作唤醒");
+//         ReadyList.push(p);
+//       } else {
+//         throw new Error("信号量出错");
+//       }
+//     }

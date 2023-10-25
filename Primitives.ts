@@ -6,6 +6,7 @@ import {
   Semasphore,
   Message_buffer,
   Primitives,
+  PStatus,
 } from "./OS";
 /**
  * 发送消息原语
@@ -45,15 +46,17 @@ export function send(PID: string, a: Message_buffer) {
  * P原语
  * @param s 信号量
  * @param 调用 P 的进程
+ * @returns true 执行, false 阻塞
  */
-export function P(s: Semasphore, p: PCB) {
-  // s.value--
+export function P(s: Semasphore, p: PCB): boolean {
   s.value--;
   // 如果s.value<0，进程插入s.queue中
   if (s.value < 0) {
     s.queue.push(p);
-    p.status = 2;
+    p.showStatus = p.status = PStatus.block;
+    return false;
   }
+  return true;
 }
 
 /**
@@ -61,14 +64,14 @@ export function P(s: Semasphore, p: PCB) {
  * @param s 信号量
  */
 export function V(s: Semasphore) {
-  // s.value++
   s.value++;
   // 如果s.value<=0，从s.queue中释放一个进程
   if (s.value <= 0) {
     let p: PCB | undefined = s.queue.shift();
     if (p) {
-      p.status = 0;
-      //   Semasphore.readyList.push(p);
+      p.status = PStatus.ready;
+      p.showStatus = PStatus.blockToReady;
+      ReadyList.rePush(p);
     }
   }
 }

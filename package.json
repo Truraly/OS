@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "node -r esbuild-register  ./test/test.ts",
-    "readerAndWriter":"node -r esbuild-register ./test/readerAndWriter.ts"
+    "readerAndWriter": "node -r esbuild-register ./test/readerAndWriter.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^20.8.8",
     "esbuild-register": "^3.5.0"
   },
   "dependencies": {

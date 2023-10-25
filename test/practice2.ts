@@ -5,10 +5,12 @@ import {
   Semasphore,
   Message_buffer,
   Primitives,
-  CPU
+  CPU,
 } from "../OS";
 import chalk from "chalk";
 CPU.CPU_COUNT = 1;
+PCB.ewif = true;
+PCB.init();
 // time priority
 // 2 1
 // 3 10
@@ -34,19 +36,11 @@ ReadyList.push(new PCB("p3   ", 1, pro, 6));
 ReadyList.push(new PCB("p4   ", 2, pro, 9));
 ReadyList.push(new PCB("p5   ", 4, pro, 4));
 
-async function main(CPUtime: number): Promise<boolean> {
-  // 结束
-  if (ReadyList.len() == 0) return false;
-  return true;
-}
-import { start, addruntimefun, setSema } from "../index";
-
-addruntimefun(main as any);
-start();
-
-/**
- * sleep
- */
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+CPU.start(
+  () => true,
+  () => {
+    // 结束
+    if (ReadyList.len() == 0) return false;
+    return true;
+  }
+);

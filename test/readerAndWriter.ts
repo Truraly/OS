@@ -5,22 +5,24 @@ import {
   Semasphore,
   Message_buffer,
   Primitives,
-  CPU
+  CPU,
 } from "../OS";
 import chalk from "chalk";
-CPU.CPU_COUNT = 99;
+
+CPU.CPU_COUNT = 10;
+PCB.init();
 /**
  * 写者进程函数
  */
 const writer: Array<(p: PCB) => number> = [
-  (p) => (Semasphore.findByName("Wmutex").P(p) ? 1 : 0),
+  (p) => (Primitives.P(Wmutex, p) ? 1 : 0),
   (p) => {
     p.needTime--;
     if (p.needTime > 0) return 2;
     return 1;
   },
   (p) => {
-    Semasphore.findByName("Wmutex").V(p);
+    Primitives.V(Wmutex);
     return 1;
   },
 ];
@@ -32,17 +34,17 @@ const writer: Array<(p: PCB) => number> = [
  * @returns 2 循环
  */
 const reader: Array<(p: PCB) => number> = [
-  (p) => (Semasphore.findByName("Rmutex").P(p) ? 1 : 0),
+  (p) => (Primitives.P(Rmutex, p) ? 1 : 0),
   (p) => {
     if (readcount == 0) {
       logger.debug("第一个读者");
-      return Semasphore.findByName("Wmutex").P(p) ? 1 : 0;
+      return Primitives.P(Wmutex, p) ? 1 : 0;
     }
     return 1;
   },
   (p) => {
     readcount++;
-    Semasphore.findByName("Rmutex").V(p);
+    Primitives.V(Rmutex);
     return 1;
   },
   (p) => {
@@ -50,15 +52,13 @@ const reader: Array<(p: PCB) => number> = [
     if (p.needTime > 0) return 2;
     return 1;
   },
-  (p) => {
-    return Semasphore.findByName("Rmutex").P(p) ? 1 : 0;
-  },
+  (p) => (Primitives.P(Rmutex, p) ? 1 : 0),
   (p) => {
     readcount--;
-    Semasphore.findByName("Rmutex").V(p);
+    Primitives.V(Rmutex);
     if (readcount == 0) {
       logger.debug("最后一个读者");
-      Semasphore.findByName("Wmutex").V(p);
+      Primitives.V(Wmutex);
     }
     return 1;
   },
@@ -97,52 +97,48 @@ logger.info(test);
  * 读者数量
  */
 let readcount = 0;
-
-async function main(CPUtime: number): Promise<boolean> {
-  let ew: string = "";
+// 主函数
+CPU.start(
+  () => true,
+  () => {
     if (!PCB.getLogsEmpty()) return true;
-  // 载入就绪的进程
-  test.forEach((item) => {
-    // console.log(item);
-    if (!((item[2] as number) <= CPUtime)) return;
-    let type = item[1] as string;
-    //
-    let pname = type + CPUtime;
-    let sleeptime = item[3] as number;
-    // 删除超长的部分
-    pname = pname.slice(0, 4);
-    // 填充空格
-    while (pname.length < 5) pname += " ";
-    // 颜色
-    if (type == "w") {
-      pname = chalk.white.bgBlue.bold(pname);
-    } else {
-      pname = chalk.white.bgMagenta.bold(pname);
-    }
-    let pp: PCB = new PCB(pname, sleeptime, type == "w" ? writer : reader);
+    // 载入就绪的进程
+    test.forEach((item) => {
+      // console.log(item);
+      if (!((item[2] as number) <= CPU.CPUtime)) return;
+      let type = item[1] as string;
+      //
+      let pname = type + CPU.CPUtime;
+      let sleeptime = item[3] as number;
+      // 删除超长的部分
+      pname = pname.slice(0, 4);
+      // 填充空格
+      while (pname.length < 5) pname += " ";
+      // 颜色
+      if (type == "w") {
+        pname = chalk.white.bgBlue.bold(pname);
+      } else {
+        pname = chalk.white.bgMagenta.bold(pname);
+      }
+      // 加入就绪队列
+      ReadyList.push(new PCB(pname, sleeptime, type == "w" ? writer : reader));
+      //   ReadyList.push(
+      //     new PCB(pname, sleeptime, type == "w" ? writer : reader, "w" ? 2 : 1)
+      //   );
+      test.splice(test.indexOf(item), 1);
+    });
+    // 结束
 
-    ReadyList.push(pp);
-    test.splice(test.indexOf(item), 1);
-  });
-  // 结束
-  if (test.length == 0 && ReadyList.len() == 0) return false;
-  return true;
-}
-import { start, addruntimefun, setSema } from "../index";
+    if (test.length == 0 && ReadyList.len() == 0) return false;
+    return true;
+  }
+);
+
 /**
  * 写信号量
  */
-setSema("Wmutex", 1);
+let Wmutex = new Semasphore(1, "Wmutex");
 /**
  * 读写“读者数量”信号量
  */
-setSema("Rmutex", 1);
-addruntimefun(main as any);
-start();
-
-/**
- * sleep
- */
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+let Rmutex = new Semasphore(1, "Rmutex");

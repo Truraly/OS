@@ -1,10 +1,5 @@
 import chalk from "chalk";
-
-/**
- * 最大进程数量
- */
-const MAX_LENGTH = 8;
-
+import process from "process";
 import {
   logger,
   ReadyList,
@@ -13,6 +8,15 @@ import {
   Primitives,
 } from "./OS";
 export class PCB {
+  /**
+   * 额外信息
+   */
+  static ewif: boolean = false;
+  static ew: string = "";
+  /**
+   * 最大进程数量
+   */
+  static MAX_LENGTH = 5;
   /**
    * PID
    */
@@ -34,14 +38,13 @@ export class PCB {
         case 0:
           logger.debug("进程", this.pname, "阻塞");
           this.funs.shift();
-          this.setStatus(6);
-          return 6;
+          return 0;
         case 1:
           this.funs.shift();
           continue;
         case 2:
           logger.debug("进程", this.pname, "时间片用完，进入就绪队列");
-          this.setStatus(1);
+          this.status = PStatus.ready;
           return 2;
         default:
           this.funs.shift();
@@ -49,8 +52,8 @@ export class PCB {
       }
     }
     logger.debug("进程", this.pname, "执行完毕");
-    this.status = 3;
-    this.setStatus(5);
+    this.showStatus = this.status = PStatus.finish;
+
     return 1;
   }
   /**
@@ -62,28 +65,27 @@ export class PCB {
    */
   funs: Array<(p: PCB) => number>;
   /**
-   * 设置进程本轮状态
-   * @param status number
-   * 0:就绪，1:执行，2:阻塞，3:执行完毕，4:已删除（渲染不用）
-   * 5:刚执行完毕，6:运作转阻塞 （用于渲染）
-   */
-  setStatus(status: number) {
-    let index = PCB.PCBList.findIndex((item) => item == this);
-    if (index == -1) {
-      throw new Error("进程不存在");
-    }
-    PCB.PCBStatusList[index] = status;
-  }
-  /**
    * 进程剩余任务量
    */
   needTime: number;
   /**
    * 进程状态
-   * 0:就绪，1:执行，2:阻塞，3:执行完毕，4:已删除
-   * 5:刚执行完毕，6:运作转阻塞 （用于渲染）
+   * 0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
    */
-  status: number;
+  status: PStatus;
+  /**
+   * 本轮展示的状态
+   *  @param status number
+   *  0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
+   */
+  set showStatus(status: PStatus) {
+    let index = PCB.PCBList.findIndex((item) => item == this);
+    if (index == -1) {
+      throw new Error("进程不存在");
+      process.exit(0);
+    }
+    PCB.PCBStatusList[index] = status;
+  }
   /**
    * 优先级
    */
@@ -117,10 +119,14 @@ export class PCB {
     fun: Array<(p: PCB) => number>,
     priority: number = 0
   ) {
+    if (PCB.PCBList.length == 0) {
+      logger.error("PCB未初始化");
+      process.exit();
+    }
     this.funs = new Array<(p: PCB) => number>(...fun);
     this.pname = name;
     this.needTime = time;
-    this.status = 0;
+    this.status = PStatus.ready;
     this.priority = priority;
     this.pid = Math.floor(Math.random() * 100000).toString();
     // 不满5位补0
@@ -138,56 +144,57 @@ export class PCB {
         return;
       }
     }
+    this.showStatus = this.status;
     throw new Error("进程列表已满");
+  }
+  /**
+   * 初始化
+   */
+  static init(n: number = PCB.MAX_LENGTH) {
+    PCB.MAX_LENGTH = n;
+    PCB.PCBList = new Array(PCB.MAX_LENGTH).fill(null);
+    PCB.PCBStatusListHis = [
+      new Array<number>(PCB.MAX_LENGTH).fill(0),
+      new Array<number>(PCB.MAX_LENGTH).fill(0),
+    ];
+    PCB.PCBStatusList = new Array<number>(PCB.MAX_LENGTH).fill(0);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
   /**
    * 获取颜色
-   * @param n
+   * @param n Status
    * @returns
    */
-  static getColor(n: number) {
-    // console.log(n);
-    return [
-      // * 0:就绪，1:执行，2:阻塞，3:执行完毕，4:已删除（渲染不用）
-      // * 5:刚执行完毕，6:运作转阻塞 （用于渲染）
-      chalk.blue.bgGray.bold(" "),
-      chalk.blue.bgGreen.bold(" "),
-      chalk.blue.bgYellow.bold(" "),
-      chalk.blue.bgGreen.bold(" "),
-      chalk.blue.bgGray.bold(" "),
-      chalk.blue.bgGreen.bold(" "),
-      chalk.blue.bgHex("#eb9100").bold(" "),
-    ][n];
-  }
+  static getColor = (n: PStatus) => STATUS_COLOR[n].color;
 
   /**
    * 进程列表
    */
-  static PCBList: Array<PCB | null> = new Array(MAX_LENGTH).fill(null);
+  static PCBList: Array<PCB | null> = [];
+  // new Array(PCB.MAX_LENGTH).fill(null);
   /**
    * 刷新进程列表，删除已删除进程
    */
   static flush() {
     let length_ = PCB.PCBList.length;
     for (let i = 0; i < length_; i++) {
-      if (PCB.PCBList[i] && (PCB.PCBList[i] as PCB).status == 4) {
+      let p: PCB | null = PCB.PCBList[i];
+      if (p == null) continue;
+      if (p.status == PStatus.deleted) {
+        p.showStatus = PStatus.empty;
         PCB.PCBList[i] = null;
-      } else if (PCB.PCBList[i] && (PCB.PCBList[i] as PCB).status == 3) {
-        (PCB.PCBList[i] as PCB).status = 4;
+      } else if (p.status == PStatus.finish) {
+        p.showStatus = p.status = PStatus.deleted;
+    //   } else if (
+    //     p.status == PStatus.ready &&
+    //     PCB.PCBStatusList[i] == PStatus.blockToReady
+    //   ) {
+      } else {
+        p.showStatus = p.status;
       }
     }
-    // 将刚执行完毕的进程状态改为已删除
-    // 将刚转阻塞的进程状态改为阻塞
-    PCB.PCBStatusList.forEach((item, index) => {
-      if (item == 5) {
-        PCB.PCBStatusList[index] = 0;
-      } else if (item == 6) {
-        PCB.PCBStatusList[index] = 2;
-      }
-    });
     // TODO:删除已经没用的记录
   }
   /**
@@ -227,27 +234,24 @@ export class PCB {
   /**
    * 进程信息列表his
    */
-  static PCBStatusListHis: Array<Array<number>> = [
-    new Array<number>(MAX_LENGTH).fill(0),
-    new Array<number>(MAX_LENGTH).fill(0),
-  ];
+  static PCBStatusListHis: Array<Array<number>> = [];
 
   /**
    * 进程信息列表
-   * 0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:刚执行完毕，6:运作转阻塞
+   * 0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
    */
-  static PCBStatusList: Array<number> = new Array<number>(MAX_LENGTH).fill(0);
+  static PCBStatusList: Array<number> = [];
 
   /**
    * 打印进程信息
+   * @param CPUtime CPU时间
+   * @param ew 额外信息
    */
-  static printStatus(CPUtime: number, ew: string = ""): void {
-    // console.log("");
-    // console.log("PCB.PCBStatusListHis[1]", PCB.PCBStatusListHis[1].join(" "));
-    // console.log("PCB.PCBStatusListHis[0]", PCB.PCBStatusListHis[0].join(" "));
-    // console.log("PCB.PCBStatusList", PCB.PCBStatusList.join(" "));
+  static printStatus(CPUtime: number): void {
+    // console.log(PCB.PCBStatusList);
     /**
      * 获取背景色
+     * @param str 字符串
      */
     function getBgColor(str: string = " ") {
       return [chalk.bgHex("#262626"), chalk.white][CPUtime % 2](str);
@@ -273,48 +277,50 @@ export class PCB {
     /**
      * CPUtime
      */
-    let str = L + K() + o_t_t(CPUtime) + K() + L;
+    let str = L + K() + getBgColor(o_t_t(CPUtime)) + K() + L;
     /**
      * 进程日志
      */
     for (let i = 0; i < PCB.PCBStatusList.length; i++) {
+      /**
+       * 记录器中的进程状态
+       */
       let item = PCB.PCBStatusList[i];
-
       let t = K(5);
-
       // 如果上一位为非0，但上上一位为0，则打印进程ID
       // 打印进程状态
-      if (item == 0) {
+      if (item == PStatus.empty || item == PStatus.deleted) {
         // 打印空格
-      } else if (PCB.PCBStatusListHis[0][i] == 0) {
+      } else if (
+        PCB.PCBStatusListHis[0][i] == PStatus.empty ||
+        PCB.PCBStatusListHis[0][i] == PStatus.deleted
+      ) {
         // 如果上一位为0，则打印进程名
         t = getBgColor((PCB.PCBList[i] as PCB).pname);
-      } else if (PCB.PCBStatusListHis[1][i] == 0) {
+      } else if (
+        PCB.PCBStatusListHis[1][i] == PStatus.empty ||
+        PCB.PCBStatusListHis[1][i] == PStatus.deleted
+      ) {
         // 打印进程ID
         t = getBgColor((PCB.PCBList[i] as PCB).pid);
-      } else if (item == 5) {
+      } else if (item == PStatus.finish) {
+        // 打印总共运行时间
         let cont = 1;
         for (let j = 0; PCB.PCBStatusListHis[j][i] != 0; j++) {
           cont++;
         }
         t = getBgColor("PT " + o_t_t(cont));
       }
-
       str += K() + t + K() + PCB.getColor(item) + K() + L;
     }
 
-    // 打印信号量
-    // Semasphore.semasphoreList.forEach((item) => {
-    //   str += " " + item.name_ + ":" + item.value;
-    // });
     // 打印额外信息
-    str += ew;
+    if (PCB.ewif) str += PCB.ew;
     // 打印
     logger.info(str);
-
     // 记录进程状态
     PCB.PCBStatusListHis.unshift(new Array<number>(...PCB.PCBStatusList));
-    // console.log("PCB.PCBStatusListHis[0]", PCB.PCBStatusListHis[0].join(" "));
+    // 更新进程状态
     PCB.flush();
   }
 }
@@ -326,5 +332,92 @@ export class PCB {
  */
 function o_t_t(num: number, type: string = " ") {
   num = num % 100;
-  return num < 10 ? type + num : num;
+  return num < 10 ? type + num : num.toString();
 }
+
+/**
+ * 进程状态
+ * 0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
+ */
+export enum PStatus {
+  /**
+   * 空位
+   */
+  empty = 0,
+  /**
+   * 就绪
+   */
+  ready = 1,
+  /**
+   * 执行
+   */
+  run = 2,
+  /**
+   * 阻塞
+   */
+  block = 3,
+  /**
+   * 执行->完毕
+   */
+  finish = 4,
+  /**
+   * 运作->阻塞
+   */
+  runToBlock = 5,
+  /**
+   * 已删除（用于渲染空行）
+   */
+  deleted = 6,
+  /**
+   * 阻塞->就绪
+   */
+  blockToReady = 7,
+}
+
+/**
+ * 颜色
+ *  0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
+ */
+const STATUS_COLOR = {
+  "0": {
+    name_: "空位",
+    color: chalk.bgGray.bold(" "),
+  },
+  "1": {
+    name_: "就绪",
+    // color: chalk.bgWhite.bold(" "),
+    color: chalk.bgHex("#a8dce3").bold(" "),
+    // color: chalk.bgCyanBright.bold(" "),
+  },
+  "2": {
+    name_: "执行",
+    color: chalk.bgGreen.bold(" "),
+  },
+  "3": {
+    name_: "阻塞",
+    color: chalk.bgYellow.bold(" "),
+  },
+  "4": {
+    name_: "执行完毕",
+    color: chalk.bgHex("#006638").bold(" "),
+  },
+  "5": {
+    name_: "运作转阻塞",
+    color: chalk.bgHex("#eb6600").bold(" "),
+  },
+  "6": {
+    name_: "已删除",
+    color: chalk.bgHex("#404040").bold(" "),
+  },
+  "7": {
+    name_: "阻塞转就绪",
+    color: chalk.bgHex("#ebbc00").bold(" "),
+  },
+};
+
+let str = "";
+for (let i in PStatus) {
+  if (!isNaN(Number(i)))
+    str += STATUS_COLOR[i].name_ + ":" + STATUS_COLOR[i].color + "   ";
+}
+console.log(str);
