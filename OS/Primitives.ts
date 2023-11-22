@@ -7,6 +7,8 @@ import {
   Message_buffer,
   Primitives,
   PStatus,
+  ProcessController,
+  SystemStatusMonitor,
 } from "./OS";
 /**
  * 发送消息原语
@@ -24,11 +26,11 @@ export function send(PID: string, a: Message_buffer) {
   };
   // 将发送区a.text的内容复制到接收区i.text中（JS不需要做）
   // 将i插入到进程PID的消息队列中
-  let p: PCB | null = PCB.findByPid(PID);
+  let p: PCB | null = ProcessController.findByPid(PID);
   if (!p) {
     throw new Error("进程不存在");
   }
-  P(p.mutex, PCB.findByPid(a.sender) as PCB);
+  P(p.mutex, ProcessController.findByPid(a.sender) as PCB);
   if (p.front == null) {
     p.front = i;
   } else {
@@ -53,7 +55,8 @@ export function P(s: Semasphore, p: PCB): boolean {
   // 如果s.value<0，进程插入s.queue中
   if (s.value < 0) {
     s.queue.push(p);
-    p.showStatus = p.status = PStatus.block;
+    SystemStatusMonitor.showStatus(p, PStatus.block);
+    this.status = PStatus.block;
     return false;
   }
   return true;
@@ -70,7 +73,7 @@ export function V(s: Semasphore) {
     let p: PCB | undefined = s.queue.shift();
     if (p) {
       p.status = PStatus.ready;
-      p.showStatus = PStatus.blockToReady;
+      SystemStatusMonitor.showStatus(p, PStatus.blockToReady);
       ReadyList.rePush(p);
     }
   }

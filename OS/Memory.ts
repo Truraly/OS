@@ -115,59 +115,6 @@ export class Memory {
   }
 
   /**
-   * 打印内存
-   */
-  static print(ret: boolean = false) {
-    let str = "";
-    Memory.forEach((block, index) => {
-      let add = `${block.start} ${block.start + block.size - 1}`;
-      str +=
-        `|` +
-        (block.status == 1
-          ? chalk.bgHex("#66bc7e").bold(add)
-          : chalk.bgGray.bold(add));
-    });
-    str += `|`;
-    if (!ret) logger.info("内存:", str);
-    else return str;
-  }
-
-  /**
-   * 打印内存 进度条形式
-   * @param len 进度条长度
-   * @param ret 是否返回
-   */
-  static print2(len: number, ret: boolean = false) {
-    let str = "";
-    let p = Memory.MEMORY_SIZE / len;
-    // 统计每一段内存被占用的数量
-    let arr = new Array(len).fill(0);
-    Memory.forEach((block, index) => {
-      // logger.warn(block.status);
-      if (block.status == 0) return;
-      let start = block.start;
-      let end = block.start + block.size - 1;
-      for (let i = start; i <= end; i++) {
-        arr[Math.floor(i / p)]++;
-      }
-    });
-    // 绘制进度条
-    // 小于33% 灰色 33%-66% 浅绿 66%-100% 绿
-    arr.forEach((v) => {
-      v = (v / p) * 100;
-      if (v < 33) {
-        str += chalk.bgGray(" ");
-      } else if (v < 66) {
-        str += chalk.bgHex("#66bc7e")(" ");
-      } else {
-        str += chalk.bgHex("#2a9d8f")(" ");
-      }
-    });
-    if (!ret) logger.info("内存:", str);
-    else return str;
-  }
-
-  /**
    * 遍历内存
    */
   static forEach(

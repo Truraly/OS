@@ -1,4 +1,4 @@
-import { logger } from "./Logger";
+import { logger, debuggerLogger } from "./Logger";
 import { PCB, PStatus } from "./PCB";
 import { ReadyList } from "./ReadyList";
 import { Semasphore } from "./Semasphore";
@@ -6,9 +6,11 @@ import { Message_buffer } from "./Message_buffer";
 import * as Primitives from "./Primitives";
 import { CPU } from "./CPU";
 import { Memory, MemoryBlock } from "./Memory";
-
+import { SystemStatusMonitor } from "./SystemStatusMonitor";
+import { ProcessController } from "./ProcessController";
 export {
   logger,
+  debuggerLogger,
   PCB,
   ReadyList,
   Semasphore,
@@ -18,6 +20,8 @@ export {
   PStatus,
   Memory,
   MemoryBlock,
+  SystemStatusMonitor,
+  ProcessController,
 };
 
 export interface Hardware {
@@ -82,7 +86,6 @@ export class OS {
     };
     software?: {
       TimeOut?: number;
-      Msgif?: boolean;
     };
     log?: {
       showCPULoad?: boolean;
@@ -101,7 +104,6 @@ export class OS {
         },
         software: {
           TimeOut: 0,
-          Msgif: true,
         },
         log: {
           showCPULoad: true,
@@ -114,16 +116,59 @@ export class OS {
     );
 
     CPU.CPU_COUNT = config_.hardware.CpuCount;
-    PCB.init(config_.hardware.MaxPCB);
+    ProcessController.init(config_.hardware.MaxPCB);
     Memory.init();
-    PCB.ewif = config_.software.Msgif;
     CPU.TIME_OUT = config_.software.TimeOut;
+    ReadyList.init();
+
+    // 打印配置信息
+    logger.info("CPU数量：", CPU.CPU_COUNT);
+    logger.info("监控最大大小：", SystemStatusMonitor.MAX_LENGTH);
   }
   /**
    * 启动操作系统
-   * TODO
    */
-  static async start() {}
+  static async start(
+    beforeDo: () => boolean | Promise<boolean>,
+    afterDo: () => boolean | Promise<boolean>
+  ) {
+    /**
+     * 程序运行
+     */
+    logger.info("CPU开始运行");
+    logger.info("-----------------------------------------------------------");
+    SystemStatusMonitor.printSystemStatusHead();
+    // 计数器+1
+    while (++CPU.CPUtime) {
+      // 执行前
+      if (!(await beforeDo())) {
+        logger.info("进程执行前退出");
+        // 推出程序并打印进程状态
+        SystemStatusMonitor.printSystemStatus();
+        break;
+      }
+      // 定时跳出
+      if (CPU.CPUtime > CPU.TIME_OUT && CPU.TIME_OUT != 0) {
+        logger.warn("进程执行超时");
+        logger.warn("ReadyList.readyList:", ReadyList.readyList);
+        break;
+      }
+      // 输出就绪队列
+      logger.debug("就绪队列：", ReadyList.Print());
+      // 执行进程
+      CPU.main();
+      //   console.log(PCB.PCBStatusList);
+      if (!(await afterDo())) {
+        logger.info("进程执行后退出");
+        // 推出程序并打印进程状态
+        SystemStatusMonitor.printStatus();
+        break;
+      }
+      // 打印进程状态
+      SystemStatusMonitor.printSystemStatus();
+      SystemStatusMonitor.resetLoad();
+    }
+  }
 
   /**
    * sleep

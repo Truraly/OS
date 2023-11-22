@@ -10,6 +10,8 @@ import {
   CPU,
   Memory,
   OS,
+  ProcessController,
+  SystemStatusMonitor,
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -22,7 +24,6 @@ OS.init({
   },
   software: {
     TimeOut: 0,
-    Msgif: true,
   },
 });
 
@@ -41,19 +42,25 @@ const pro: Array<(p: PCB) => number> = [
   },
 ];
 // 创建进程
-PCB.createPCB("p1   ", 10, pro, 0, 10);
-PCB.createPCB("p3   ", 3, pro, 0, 4);
-PCB.createPCB("px   ", 1, pro, 0, 12);
-PCB.createPCB("p2   ", 4, pro, 0, 6);
+ProcessController.createPCB("p1   ", 10, pro, 0, 10);
+ProcessController.createPCB("p3   ", 3, pro, 0, 4);
+ProcessController.createPCB("px   ", 1, pro, 0, 12);
+ProcessController.createPCB("p2   ", 4, pro, 0, 6);
 // 运行
-CPU.start(
+OS.start(
   () => true,
   () => {
     if (CPU.CPUtime == 3) {
-      PCB.createPCB("p4   ", 2, pro, 0, 6);
+      ProcessController.createPCB("p4   ", 2, pro, 0, 6);
     }
     // 结束
-    if (ReadyList.len() == 0) return false;
+    if (
+      ReadyList.len() == 0 &&
+      SystemStatusMonitor.PCBStatusListHis.every((item) =>
+        item.every((item) => item == 0)
+      )
+    )
+      return false;
     return true;
   }
 );

@@ -9,13 +9,14 @@ import {
   Primitives,
   CPU,
   Memory,
+  SystemStatusMonitor
 } from "../OS/OS";
 import chalk from "chalk";
 
 CPU.CPU_COUNT = 10;
 PCB.init();
 Memory.init();
-PCB.ewif = true;
+SystemStatusMonitor.ewif = true;
 /**
  * 写者进程函数
  */
@@ -91,7 +92,7 @@ let readcount = 0;
 CPU.start(
   () => true,
   () => {
-    if (!PCB.getLogsEmpty()) return true;
+    if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 载入就绪的进程
     test.forEach((item) => {
       // console.log(item);

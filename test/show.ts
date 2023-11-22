@@ -11,6 +11,7 @@ import {
   CPU,
   Memory,
   OS,
+  SystemStatusMonitor
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -33,7 +34,7 @@ function s2(p: PCB) {
     throw new Error("消息队列为空");
   }
   //   console.log(msg);
-  PCB.ew = msg.replace(/ +/, "进程");
+  SystemStatusMonitor.ew = msg.replace(/ +/, "进程");
   p.front = p.front?.next || null;
   return 1;
 }
@@ -122,7 +123,7 @@ CPU.start(
   async () => {
     await OS.sleep(200);
     // 载入就绪的进程
-    if (!PCB.getLogsEmpty()) return true;
+    if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 随机数
     if (Math.random() < 0.7) return true;
     // 随机读者写者

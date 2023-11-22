@@ -13,6 +13,7 @@ import {
   CPU,
   Memory,
   OS,
+  SystemStatusMonitor,
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -103,7 +104,7 @@ CPU.start(
     // await sleep(100);
     await OS.sleep(1);
     // 载入就绪的进程
-    if (!PCB.getLogsEmpty()) return true;
+    if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 随机数
     if (Math.random() < 0.6) return true;
     // 随机读者写者

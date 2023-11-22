@@ -1,0 +1,139 @@
+import {
+  logger,
+  PCB,
+  ReadyList,
+  Semasphore,
+  Message_buffer,
+  Primitives,
+  CPU,
+  PStatus,
+  Memory,
+  MemoryBlock,
+  SystemStatusMonitor,
+} from "./OS";
+
+export class ProcessController {
+
+  /**
+   * 监听的进程列表
+   */
+  static PCBList: Array<PCB | null> = [];
+  /**
+   * 进程计数
+   */
+  static processCount = 0;
+  /**
+   * 创建进程
+   * @param name 进程名
+   * @param time 进程要求时间
+   * @param fun 进程函数列表
+   * @param priority 优先级
+   * @param memory 内存大小
+   */
+  static createPCB(
+    name: string,
+    time: number,
+    fun: Array<(p: PCB) => number>,
+    priority: number = 0,
+    memory: number = 1
+  ): PCB | null {
+    if (ProcessController.PCBList.length == 0) {
+      logger.error("PCB未初始化");
+      process.exit();
+    }
+    //
+    let newPCB: PCB = {
+      funs: new Array<(p: PCB) => number>(...fun),
+      pname: name,
+      needTime: time,
+      status: PStatus.ready,
+      priority: priority,
+      pid: SystemStatusMonitor.formatStr(
+        (ProcessController.processCount++).toString(),
+        5
+      ),
+      front: null,
+      mutex: new Semasphore(1, "mutex-" + name),
+      sm: new Semasphore(0, "sm-" + name),
+      memory: null,
+      joinTime: CPU.CPUtime,
+    };
+
+    // 检查是否有空位
+    let MemoryBlock = Memory.distributeMemory(
+      memory,
+      new Number(newPCB.pid).valueOf()
+    );
+    if (MemoryBlock == null) {
+      logger.error("内存不足");
+      return null;
+    }
+    newPCB.memory = MemoryBlock;
+    // 插入就绪队列
+    for (let i = 0; i < ProcessController.PCBList.length; i++) {
+      if (!ProcessController.PCBList[i]) {
+        ProcessController.PCBList[i] = newPCB;
+        SystemStatusMonitor.PCBStatusListHis[0][i] = 1;
+        // logger.debug("创建进程", newPCB.pname, "成功");
+        SystemStatusMonitor.showStatus(newPCB, PStatus.ready);
+        newPCB.status = PStatus.ready;
+        ReadyList.push(newPCB);
+        return newPCB;
+      }
+    }
+    logger.error("PCB已满");
+    return null;
+  }
+  /**
+   * 删除进程
+   */
+  static deletePCB(pcb: PCB) {
+    let index = ProcessController.PCBList.indexOf(pcb);
+    if (index == -1) {
+      logger.error("进程不存在");
+      return;
+    }
+    ProcessController.PCBList[index] = null;
+    SystemStatusMonitor.PCBStatusListHis[0][index] = 0;
+    SystemStatusMonitor.PCBStatusListHis[1][index] = 0;
+    SystemStatusMonitor.PCBStatusListHis[2][index] = 0;
+    SystemStatusMonitor.showStatus(pcb, PStatus.deleted);
+    pcb.status = PStatus.deleted;
+    ReadyList.readyList = ReadyList.readyList.filter((item) => item != pcb);
+    if (pcb.memory) Memory.freeMemory(pcb.memory);
+    logger.debug("删除进程", pcb.pname, "成功");
+  }
+
+  /**
+   * 初始化
+   */
+  static init(n: number = SystemStatusMonitor.MAX_LENGTH) {
+    SystemStatusMonitor.MAX_LENGTH = n;
+    ProcessController.PCBList = new Array(SystemStatusMonitor.MAX_LENGTH).fill(
+      null
+    );
+    SystemStatusMonitor.PCBStatusListHis = [
+      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(0),
+      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(0),
+    ];
+  }
+
+  /**
+   * 根据pid查找进程
+   * @param pid
+   */
+  static findByPid(pid: string): PCB | null {
+    let length_ = ProcessController.PCBList.length;
+    for (let i = 0; i < length_; i++) {
+      if (
+        ProcessController.PCBList[i] &&
+        (ProcessController.PCBList[i] as PCB).pid == pid
+      ) {
+        return ProcessController.PCBList[i];
+      }
+    }
+    return null;
+  }
+
+
+}

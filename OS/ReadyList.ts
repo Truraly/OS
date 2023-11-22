@@ -5,6 +5,8 @@ import {
   Message_buffer,
   Primitives,
   PStatus,
+  ProcessController,
+  SystemStatusMonitor,
 } from "./OS";
 import { P } from "./Primitives";
 /**
@@ -24,7 +26,8 @@ export class ReadyList {
    */
   static push(p: PCB) {
     this.readyList.push(p);
-    p.showStatus = p.status = PStatus.ready;
+    SystemStatusMonitor.showStatus(p, PStatus.ready);
+    p.status = PStatus.ready;
   }
   /**
    * 保持进程状态，进入就绪队列
@@ -62,7 +65,8 @@ export class ReadyList {
    */
   static run() {
     let p = this.shift();
-    p.showStatus = p.status = PStatus.run;
+    SystemStatusMonitor.showStatus(p, PStatus.run);
+    p.status = PStatus.run;
     return p;
   }
   /**
@@ -74,5 +78,11 @@ export class ReadyList {
   /**
    * 就绪队列
    */
-  static readyList: Array<PCB> = new Array<PCB>();
+  static readyList: Array<PCB>;
+  /**
+   * 初始化
+   */
+  static init() {
+    this.readyList = new Array<PCB>();
+  }
 }
