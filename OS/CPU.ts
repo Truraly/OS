@@ -7,8 +7,9 @@ import {
   Message_buffer,
   Primitives,
   PStatus,
+  Memory,
+  MemoryBlock,
 } from "./OS";
-import { P } from "./Primitives";
 
 export class CPU {
   /**
@@ -103,6 +104,7 @@ export class CPU {
         PCB.printStatus(CPU.CPUtime);
         break;
       }
+      Memory.print();
     }
   }
 }

@@ -5,6 +5,7 @@ import { Semasphore } from "./Semasphore";
 import { Message_buffer } from "./Message_buffer";
 import * as Primitives from "./Primitives";
 import { CPU } from "./CPU";
+import { Memory, MemoryBlock } from "./Memory";
 
 export {
   logger,
@@ -15,4 +16,6 @@ export {
   Primitives,
   CPU,
   PStatus,
+  Memory,
+  MemoryBlock,
 };

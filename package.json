@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node -r esbuild-register  ./test/test.ts",
-    "readerAndWriter": "node -r esbuild-register ./test/readerAndWriter.ts"
+    "readerAndWriter": "node -r esbuild-register ./test/readerAndWriter.ts",
+    "TS": "node -r esbuild-register"
   },
   "keywords": [],
   "author": "",

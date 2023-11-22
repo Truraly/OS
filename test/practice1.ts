@@ -1,3 +1,5 @@
+// 操作系统实验1
+// 读写者问题
 import {
   logger,
   PCB,
@@ -6,7 +8,7 @@ import {
   Message_buffer,
   Primitives,
   CPU,
-} from "../OS";
+} from "../OS/OS";
 import chalk from "chalk";
 
 CPU.CPU_COUNT = 10;

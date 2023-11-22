@@ -1,3 +1,5 @@
+// 可持续性读写者问题
+
 /**
  * sleep
  */
@@ -13,11 +15,13 @@ import {
   Message_buffer,
   Primitives,
   CPU,
-} from "../OS";
+  Memory,
+} from "../OS/OS";
 import chalk from "chalk";
 
 CPU.CPU_COUNT = 2;
 PCB.init(10);
+Memory.init();
 /**
  * 写者进程函数
  */
@@ -100,11 +104,15 @@ CPU.start(
     } else {
       pname = chalk.white.bgMagenta.bold(pname);
     }
-    let pp: PCB = new PCB(pname, sleeptime, type == "w" ? writer : reader);
-
+    let pp: PCB | null = PCB.createPCB(
+      pname,
+      sleeptime,
+      type == "w" ? writer : reader,
+      0,
+      type == "w" ? 3 : 6
+    );
+    if (pp == null) return true;
     ReadyList.push(pp);
-
-
     return true;
   }
 );

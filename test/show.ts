@@ -1,3 +1,5 @@
+// 带有显示的读写者问题
+
 /**
  * sleep
  */
@@ -13,7 +15,7 @@ import {
   Message_buffer,
   Primitives,
   CPU,
-} from "../OS";
+} from "../OS/OS";
 import chalk from "chalk";
 
 CPU.CPU_COUNT = 4;
