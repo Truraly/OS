@@ -9,14 +9,18 @@ import {
   Memory,
   MemoryBlock,
 } from "./OS";
+
+export class PCBController {
+  // 全局属性
+  /**
+   * 最大进程数量
+   */
+  static MAX_LENGTH = 5;
+}
 export class PCB {
   ///////////////////////////////////////
   // 全局属性
-  /**
-   * 额外信息
-   */
-  static ewif: boolean = false;
-  static ew: string = "";
+
   /**
    * 最大进程数量
    */
@@ -157,6 +161,7 @@ export class PCB {
         PCB.PCBStatusList[i] = 1;
         // logger.debug("创建进程", newPCB.pname, "成功");
         newPCB.showStatus = newPCB.status = PStatus.ready;
+        ReadyList.push(newPCB);
         return newPCB;
       }
     }
@@ -209,6 +214,11 @@ export class PCB {
   // 输出相关
   ////////////////////////////////////////////////////////////////////////////////////
   /**
+   * 额外信息
+   */
+  static ewif: boolean = false;
+  static ew: string = "";
+  /**
    * 获取颜色
    * @param n Status
    * @returns
@@ -241,7 +251,31 @@ export class PCB {
         p.showStatus = p.status;
       }
     }
-    // TODO:删除已经没用的记录
+    // 删除已经没用的记录
+    // 从现在开始往上翻，如果从某一条记录开始，没有任何一个进程是当前有的，那么从这里到之前都是无用的，全部删除
+    // 创建相同长度的数组
+    let pidarr = new Array<number>(PCB.PCBList.length).fill(1);
+    // logger.info("pidarr.length", pidarr.length);
+    // logger.info("PCB.PCBStatusListHis.length", PCB.PCBStatusListHis.length);
+    for (let i = 4; i < PCB.PCBStatusListHis.length; i++) {
+      for (let j = 0; j < PCB.PCBList.length; j++) {
+        if (
+          PCB.PCBStatusListHis[i][j] == 0 &&
+          pidarr[j] == 1 &&
+          PCB.PCBStatusListHis[i - 1][j] == 0
+        ) {
+          pidarr[j] = 0;
+        }
+      }
+      // 如果数组全是0，说明这一条记录是无用的
+      if (pidarr.every((item) => item == 0)) {
+        // 删除后面全部
+        // logger.info("删除无用记录", i);
+        PCB.PCBStatusListHis.splice(i);
+        // logger.info("PCB.PCBStatusListHis.length", PCB.PCBStatusListHis.length);
+        return;
+      }
+    }
   }
   /**
    * 根据pid查找进程
@@ -365,7 +399,9 @@ export class PCB {
     }
 
     // 打印额外信息
-    if (PCB.ewif) str += PCB.ew;
+    // if (PCB.ewif) str += PCB.ew;
+    if (PCB.ewif)
+      str += (Memory.print2(50, true) as string) + Memory.print(true) + PCB.ew;
     // 打印
     logger.info(str);
     // 记录进程状态
@@ -471,3 +507,8 @@ for (let i in PStatus) {
     str += STATUS_COLOR[i].name_ + ":" + STATUS_COLOR[i].color + "   ";
 }
 console.log(str);
+
+export class SystemStatusMonitor {
+
+    
+}

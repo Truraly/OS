@@ -1,12 +1,8 @@
-// 可持续性读写者问题
-
 /**
- * sleep
+ * 可持续性读写者问题
  */
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
+////////////////////////////////////////////////
 import {
   logger,
   PCB,
@@ -16,12 +12,37 @@ import {
   Primitives,
   CPU,
   Memory,
+  OS,
 } from "../OS/OS";
 import chalk from "chalk";
+/////////////////////////////////////////
+// 系统配置
+OS.init({
+  hardware: {
+    CpuCount: 5,
+  },
+  software: {
+    TimeOut: 0,
+  },
+});
+////////////////////////////////////////
+// 初始环境
+/**
+ * 写信号量
+ */
+let Wmutex = new Semasphore(1, "Wmutex");
+/**
+ * 读写“读者数量”信号量
+ */
+let Rmutex = new Semasphore(1, "Rmutex");
+/**
+ * 读者数量
+ */
+let readcount = 0;
 
-CPU.CPU_COUNT = 2;
-PCB.init(10);
-Memory.init();
+////////////////////////////////////////
+// 进程逻辑
+
 /**
  * 写者进程函数
  */
@@ -75,15 +96,12 @@ const reader: Array<(p: PCB) => number> = [
   },
 ];
 
-/**
- * 读者数量
- */
-let readcount = 0;
 // 主函数
 CPU.start(
   () => true,
   async () => {
-    await sleep(200);
+    // await sleep(100);
+    await OS.sleep(1);
     // 载入就绪的进程
     if (!PCB.getLogsEmpty()) return true;
     // 随机数
@@ -104,24 +122,13 @@ CPU.start(
     } else {
       pname = chalk.white.bgMagenta.bold(pname);
     }
-    let pp: PCB | null = PCB.createPCB(
+    PCB.createPCB(
       pname,
       sleeptime,
       type == "w" ? writer : reader,
       0,
       type == "w" ? 3 : 6
     );
-    if (pp == null) return true;
-    ReadyList.push(pp);
     return true;
   }
 );
-
-/**
- * 写信号量
- */
-let Wmutex = new Semasphore(1, "Wmutex");
-/**
- * 读写“读者数量”信号量
- */
-let Rmutex = new Semasphore(1, "Rmutex");

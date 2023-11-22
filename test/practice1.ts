@@ -8,11 +8,14 @@ import {
   Message_buffer,
   Primitives,
   CPU,
+  Memory,
 } from "../OS/OS";
 import chalk from "chalk";
 
 CPU.CPU_COUNT = 10;
 PCB.init();
+Memory.init();
+PCB.ewif = true;
 /**
  * 写者进程函数
  */
@@ -80,21 +83,6 @@ let test = [
 ];
 logger.info(test);
 
-// let test: [number, string, number, number][] = new Array<
-//   [number, string, number, number]
-// >();
-// let nn = Math.floor(Math.random() * 30) + 5;
-// for (let i = 1; i < nn; i++) {
-//   // 随机读者写者
-//   let type = Math.random() > 0.6 ? "w" : "r";
-//   // 随机时间
-//   let time = Math.floor(Math.random() * i * 3) + i * 2;
-//   // 随机阻塞时间
-//   let sleeptime = Math.floor(Math.random() * 10) + 2;
-//   test.push([i, type, time, sleeptime]);
-// }
-// logger.info(test);
-
 /**
  * 读者数量
  */
@@ -122,11 +110,16 @@ CPU.start(
       } else {
         pname = chalk.white.bgMagenta.bold(pname);
       }
-      // 加入就绪队列
-      ReadyList.push(new PCB(pname, sleeptime, type == "w" ? writer : reader));
-      //   ReadyList.push(
-      //     new PCB(pname, sleeptime, type == "w" ? writer : reader, "w" ? 2 : 1)
-      //   );
+      let newPCB = PCB.createPCB(
+        pname,
+        sleeptime,
+        type == "w" ? writer : reader,
+        0,
+        type == "w" ? 3 : 6
+      );
+      if (newPCB != null) {
+        ReadyList.push(newPCB);
+      }
       test.splice(test.indexOf(item), 1);
     });
     // 结束

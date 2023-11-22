@@ -104,7 +104,7 @@ export class CPU {
         PCB.printStatus(CPU.CPUtime);
         break;
       }
-      Memory.print();
+    //   Memory.print();
     }
   }
 }

@@ -8,11 +8,17 @@ Log4js.configure({
         pattern: "%m",
       },
     },
+    file: {
+      type: "file",
+      filename: "logs/app.log",
+      maxLogSize: 10485760, // max size for log file, in bytes. Once this size is reached, a new log file will be created.
+      backups: 3, // number of backup files to keep
+      compress: true, // compress the backups
+    },
   },
   categories: {
     default: {
-      appenders: ["OS"],
-    //   level: "debug",
+      appenders: ["OS", "file"], // both appenders will now be used
       level: "info",
     },
   },

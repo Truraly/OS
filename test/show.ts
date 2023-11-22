@@ -1,12 +1,6 @@
 // 带有显示的读写者问题
 
-/**
- * sleep
- */
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
+/////////////////////////////////////////////////
 import {
   logger,
   PCB,
@@ -15,13 +9,23 @@ import {
   Message_buffer,
   Primitives,
   CPU,
+  Memory,
+  OS,
 } from "../OS/OS";
 import chalk from "chalk";
+/////////////////////////////////////////
+// 系统配置
 
-CPU.CPU_COUNT = 4;
-CPU.TIME_OUT = 0;
-PCB.init(10);
-PCB.ewif = true;
+OS.init({
+  hardware: {
+    CpuCount: 4,
+    MaxPCB: 10,
+  },
+  software: {
+    TimeOut: 0,
+    Msgif: true,
+  },
+});
 
 function s2(p: PCB) {
   let msg = p.front?.sender + " " + p.front?.text;
@@ -116,7 +120,7 @@ let readcount = 0;
 CPU.start(
   () => true,
   async () => {
-    await sleep(200);
+    await OS.sleep(200);
     // 载入就绪的进程
     if (!PCB.getLogsEmpty()) return true;
     // 随机数
@@ -137,9 +141,8 @@ CPU.start(
     } else {
       pname = chalk.white.bgMagenta.bold(pname);
     }
-    let pp: PCB = new PCB(pname, sleeptime, type == "w" ? writer : reader);
 
-    ReadyList.push(pp);
+    PCB.createPCB(pname, sleeptime, type == "w" ? writer : reader);
 
     return true;
   }

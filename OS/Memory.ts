@@ -13,6 +13,7 @@ import {
   CPU,
   PStatus,
 } from "../OS/OS";
+import chalk from "chalk";
 /**
  * 内存模拟对象
  * 使用循环首次适应算法实现内存分配 NF
@@ -55,98 +56,136 @@ export class Memory {
    * @returns 分配块 如果分配失败则返回null
    */
   static distributeMemory(size: number, pid: number): MemoryBlock | null {
-    let temp: MemoryBlock = Memory.MEMORY_POINTER;
-    let pointer: MemoryBlock = Memory.MEMORY_POINTER;
-    pointer = pointer.next;
-    if (pointer == temp && pointer.size >= size && pointer.status == 0) {
-      pointer.status = 1;
-      pointer.pid = pid;
-      let newBlock: MemoryBlock = {
-        start: pointer.start + size,
-        size: pointer.size - size,
-        status: 0,
-        pid: 0,
-        last: pointer,
-        next: pointer.next,
-      };
-      // 修改指针
-      pointer.size = size;
-      pointer.next = newBlock;
-      return pointer;
-    }
-    // 遍历内存
-    while (pointer != temp) {
-      // 如果当前块空闲且大小足够
-      if (pointer.status == 0 && pointer.size >= size) {
-        // 如果大小相等
-        pointer.status = 1;
-        pointer.pid = pid;
-        if (pointer.size == size) {
-          return pointer;
-        } else {
+    // logger.info("start Memory.MEMORY_POINTER", Memory.MEMORY_POINTER.start);
+    return (
+      Memory.forEach((block: MemoryBlock, index) => {
+        Memory.MEMORY_POINTER = block;
+        if (block.status == 0 && block.size >= size) {
+          // 占用这个块
+          block.status = 1;
+          block.pid = pid;
+          // 如果大小合适,直接返回
+          if (block.size == size) return block;
           // 如果大小不等
-          let newBlock: MemoryBlock = {
-            start: pointer.start + size,
-            size: pointer.size - size,
-            status: 0,
-            pid: 0,
-            last: pointer,
-            next: pointer.next,
-          };
-          // 修改指针
-          pointer.size = size;
-          pointer.next = newBlock;
-          return pointer;
+          else {
+            let newBlock: MemoryBlock = {
+              start: block.start + size,
+              size: block.size - size,
+              status: 0,
+              pid: 0,
+              last: block,
+              next: block.next,
+            };
+            // 前后合并
+            newBlock = Memory.freeMemory(newBlock);
+            // 修改指针
+            block.next.last = block;
+            // 修改指针
+            block.size = size;
+            block.next = newBlock;
+            return block;
+          }
         }
-      }
-      // 指针后移
-      pointer = pointer.next;
-    }
-    // 如果分配失败
-    return null;
+      }, Memory.MEMORY_POINTER.next) || null
+    );
   }
 
   /**
    * 释放内存
    */
-  static freeMemory(block: MemoryBlock) {
+  static freeMemory(block: MemoryBlock): MemoryBlock {
     block.status = 0;
     block.pid = 0;
-    // 如果上一个块空闲，并且不是头指针
-    if (block.last.status == 0 && block != Memory.HEAD_POINTER) {
+    // 如果上一个块空闲
+    while (block.last.status == 0 && block.last.start < block.start) {
+      if (block == Memory.MEMORY_POINTER) Memory.MEMORY_POINTER = block.last;
       block.last.size += block.size;
       block.last.next = block.next;
       block.next.last = block.last;
       block = block.last;
     }
-    // 如果下一个块空闲，并且不是头指针
-    if (block.next.status == 0 && block.next != Memory.HEAD_POINTER) {
+    // 如果下一个块空闲
+    while (block.next.status == 0 && block.next.start > block.start) {
+      if (block.next == Memory.MEMORY_POINTER) Memory.MEMORY_POINTER = block;
       block.size += block.next.size;
       block.next = block.next.next;
       block.next.last = block;
     }
+    return block;
   }
 
   /**
    * 打印内存
    */
-  static print() {
+  static print(ret: boolean = false) {
     let str = "";
-    let temp: MemoryBlock = Memory.HEAD_POINTER;
-    let pointer: MemoryBlock = Memory.HEAD_POINTER;
-    str += `|${pointer.start} S:${pointer.status} ${
-      pointer.start + pointer.size - 1
-    }`;
+    Memory.forEach((block, index) => {
+      let add = `${block.start} ${block.start + block.size - 1}`;
+      str +=
+        `|` +
+        (block.status == 1
+          ? chalk.bgHex("#66bc7e").bold(add)
+          : chalk.bgGray.bold(add));
+    });
+    str += `|`;
+    if (!ret) logger.info("内存:", str);
+    else return str;
+  }
+
+  /**
+   * 打印内存 进度条形式
+   * @param len 进度条长度
+   * @param ret 是否返回
+   */
+  static print2(len: number, ret: boolean = false) {
+    let str = "";
+    let p = Memory.MEMORY_SIZE / len;
+    // 统计每一段内存被占用的数量
+    let arr = new Array(len).fill(0);
+    Memory.forEach((block, index) => {
+      // logger.warn(block.status);
+      if (block.status == 0) return;
+      let start = block.start;
+      let end = block.start + block.size - 1;
+      for (let i = start; i <= end; i++) {
+        arr[Math.floor(i / p)]++;
+      }
+    });
+    // 绘制进度条
+    // 小于33% 灰色 33%-66% 浅绿 66%-100% 绿
+    arr.forEach((v) => {
+      v = (v / p) * 100;
+      if (v < 33) {
+        str += chalk.bgGray(" ");
+      } else if (v < 66) {
+        str += chalk.bgHex("#66bc7e")(" ");
+      } else {
+        str += chalk.bgHex("#2a9d8f")(" ");
+      }
+    });
+    if (!ret) logger.info("内存:", str);
+    else return str;
+  }
+
+  /**
+   * 遍历内存
+   */
+  static forEach(
+    callback: (block: MemoryBlock, index: number) => any,
+    start: MemoryBlock = Memory.HEAD_POINTER
+  ) {
+    let temp: MemoryBlock = start;
+    let pointer: MemoryBlock = start;
+    let index = 0;
+    let res = callback(pointer, index++);
+    if (res) return res;
     pointer = pointer.next;
     // 遍历内存
     while (pointer != temp) {
-      str += `|${pointer.start} S:${pointer.status} ${
-        pointer.start + pointer.size - 1
-      }`;
+      let res = callback(pointer, index++);
+      if (res) return res;
       pointer = pointer.next;
     }
-    str += `|`;
-    logger.info("内存:", str);
   }
 }
 
