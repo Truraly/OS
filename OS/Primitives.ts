@@ -9,6 +9,7 @@ import {
   PStatus,
   ProcessController,
   SystemStatusMonitor,
+  ProcessStatusMonitor,
 } from "./OS";
 /**
  * 发送消息原语
@@ -55,7 +56,7 @@ export function P(s: Semasphore, p: PCB): boolean {
   // 如果s.value<0，进程插入s.queue中
   if (s.value < 0) {
     s.queue.push(p);
-    SystemStatusMonitor.setShowStatus(p, PStatus.block);
+    ProcessStatusMonitor.instance.setShowStatus(p, PStatus.block);
     this.status = PStatus.block;
     return false;
   }
@@ -73,7 +74,7 @@ export function V(s: Semasphore) {
     let p: PCB | undefined = s.queue.shift();
     if (p) {
       p.status = PStatus.ready;
-      SystemStatusMonitor.setShowStatus(p, PStatus.blockToReady);
+      ProcessStatusMonitor.instance.setShowStatus(p, PStatus.blockToReady);
       ReadyList.rePush(p);
     }
   }

@@ -16,12 +16,11 @@ import {
   SystemStatusMonitor,
   ProcessController,
 } from "../OS/OS";
-import chalk from "chalk";
 /////////////////////////////////////////
 // 系统配置
 OS.init({
   hardware: {
-    CpuCount: 5,
+    CpuCount: 1,
   },
   software: {
     TimeOut: 0,
@@ -102,12 +101,11 @@ const reader: Array<(p: PCB) => number> = [
 
 // 主函数
 OS.start(
-  () => true,
   async () => {
     // await sleep(100);
-    await OS.sleep(100);
+    await OS.sleep(10);
     // 载入就绪的进程
-    if (!SystemStatusMonitor.getLogsEmpty()) return true;
+    if (!ProcessController.getLogsEmpty()) return true;
     // 随机数
     if (Math.random() < 0.6) return true;
     // 随机读者写者
@@ -134,5 +132,6 @@ OS.start(
       type == "w" ? 11 : 5
     );
     return true;
-  }
+  },
+  () => true
 );

@@ -12,7 +12,9 @@ import {
   SystemStatusMonitor,
   debuggerLogger,
   MemoryController,
-  util
+  util,
+  ProcessStatusMonitor,
+  OS,
 } from "./OS";
 
 export class ProcessController {
@@ -50,10 +52,7 @@ export class ProcessController {
       needTime: time,
       status: PStatus.ready,
       priority: priority,
-      pid: util.formatStr(
-        (ProcessController.processCount++).toString(),
-        5
-      ),
+      pid: util.formatStr((ProcessController.processCount++).toString(), 5),
       front: null,
       mutex: new Semasphore(1, "mutex-" + name),
       sm: new Semasphore(0, "sm-" + name),
@@ -75,9 +74,9 @@ export class ProcessController {
     for (let i = 0; i < ProcessController.PCBList.length; i++) {
       if (!ProcessController.PCBList[i]) {
         ProcessController.PCBList[i] = newPCB;
-        SystemStatusMonitor.PCBStatusListHis[0][i] = 1;
+        ProcessStatusMonitor.instance.PCBStatusListHis[0][i] = 1;
         // logger.debug("创建进程", newPCB.pname, "成功");
-        SystemStatusMonitor.setShowStatus(newPCB, PStatus.ready);
+        ProcessStatusMonitor.instance.setShowStatus(newPCB, PStatus.ready);
         newPCB.status = PStatus.ready;
         ReadyList.push(newPCB);
         return newPCB;
@@ -86,6 +85,14 @@ export class ProcessController {
     ProcessController.PCBList.push(newPCB);
     logger.error("PCB已满");
     return null;
+  }
+  /**
+   * 获取是否有记录空位
+   * @returns true 有空位
+   * @returns false 没有空位
+   */
+  static getLogsEmpty(): boolean {
+    return ProcessController.PCBList.some((item) => item == null);
   }
   /**
    * 删除进程
@@ -108,16 +115,8 @@ export class ProcessController {
   /**
    * 初始化
    */
-  static init(n: number = SystemStatusMonitor.MAX_LENGTH) {
-    SystemStatusMonitor.MAX_LENGTH = n;
-    ProcessController.PCBList = new Array(SystemStatusMonitor.MAX_LENGTH).fill(
-      null
-    );
-    SystemStatusMonitor.PCBStatusListHis = [
-      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
-      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
-      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
-    ];
+  static init() {
+    ProcessController.PCBList = new Array(OS.PROCESS_NUM_MAX).fill(null);
   }
 
   /**

@@ -12,6 +12,8 @@ import {
   MemoryBlock,
   SystemStatusMonitor,
   ProcessController,
+  CPuLoadMonitor,
+  ProcessStatusMonitor,
 } from "./OS";
 
 export class CPU {
@@ -38,15 +40,16 @@ export class CPU {
     // 执行进程
     let length_ = ReadyList.len();
     // 确保本时刻不能有进程同时被2个CPU执行
-    SystemStatusMonitor.resetLoad();
+    CPuLoadMonitor.instance.loadCount = 0;
     for (
       ;
-      SystemStatusMonitor.loadCount < length_ &&
-      SystemStatusMonitor.loadCount < CPU.CPU_COUNT;
-      SystemStatusMonitor.loadCount++
+      CPuLoadMonitor.instance.loadCount < length_ &&
+      CPuLoadMonitor.instance.loadCount < CPU.CPU_COUNT;
+      CPuLoadMonitor.instance.loadCount++
     ) {
+        // console.log("CPuLoadMonitor.instance.loadCount",CPuLoadMonitor.instance.loadCount)
       let p: PCB = ReadyList.shift();
-      SystemStatusMonitor.setShowStatus(p, PStatus.run);
+      ProcessStatusMonitor.instance.setShowStatus(p, PStatus.run);
       p.status = PStatus.run;
       debuggerLogger.debug("进程" + p.pname + "开始执行");
       while (p.funs.length > 0) {
@@ -55,7 +58,7 @@ export class CPU {
         if (res == 0) {
           debuggerLogger.debug("进程", p.pname, "阻塞");
           p.funs.shift();
-          SystemStatusMonitor.setShowStatus(p, PStatus.runToBlock);
+          ProcessStatusMonitor.instance.setShowStatus(p, PStatus.runToBlock);
           p.status = PStatus.block;
           break;
         } else if (res == 1) {
@@ -64,7 +67,7 @@ export class CPU {
           continue;
         } else if (res == 2) {
           debuggerLogger.debug("进程", p.pname, "时间片用完，进入就绪队列");
-          SystemStatusMonitor.setShowStatus(p, PStatus.run);
+          ProcessStatusMonitor.instance.setShowStatus(p, PStatus.run);
           p.status = PStatus.ready;
           ReadyList.rePush(p);
           break;
@@ -76,7 +79,7 @@ export class CPU {
       if (p.funs.length == 0) {
         p.status = PStatus.finish;
         debuggerLogger.debug("进程", p.pname, "执行完毕");
-        SystemStatusMonitor.setShowStatus(p, PStatus.finish);
+        ProcessStatusMonitor.instance.setShowStatus(p, PStatus.finish);
         debuggerLogger.debug("释放进程", p.pname, "的内存");
         // ProcessController.deletePCB(p);
         SystemStatusMonitor.delPCB.push(p);

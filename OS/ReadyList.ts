@@ -7,6 +7,7 @@ import {
   PStatus,
   ProcessController,
   SystemStatusMonitor,
+  ProcessStatusMonitor,
 } from "./OS";
 /**
  * 就绪列表类
@@ -25,7 +26,7 @@ export class ReadyList {
    */
   static push(p: PCB) {
     this.readyList.push(p);
-    SystemStatusMonitor.setShowStatus(p, PStatus.ready);
+   ProcessStatusMonitor.instance.setShowStatus(p, PStatus.ready);
     p.status = PStatus.ready;
   }
   /**
