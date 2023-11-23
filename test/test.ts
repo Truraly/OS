@@ -15,17 +15,27 @@ import {
   OS,
   SystemStatusMonitor,
   ProcessController,
+  type RunFunctions as RunFunction,
 } from "../OS/OS";
 /////////////////////////////////////////
 // 系统配置
 OS.init({
   hardware: {
-    CpuCount: 1,
+    CpuCount: 2,
+    MemorySize: 128,
+    MaxPCB: 6,
   },
   software: {
     TimeOut: 0,
     MemoryAlgorithm: "FF",
     MemoryBarLength: 20,
+  },
+  log: {
+    showCPULoad: true,
+    showMemoryBar: true,
+    showMemoryDetail: true,
+    showMemoryRate: true,
+    showProcessStatus: true,
   },
 });
 ////////////////////////////////////////
@@ -49,7 +59,7 @@ let readcount = 0;
 /**
  * 写者进程函数
  */
-const writer: Array<(p: PCB) => number> = [
+const writer: Array<RunFunction> = [
   (p) => (Primitives.P(Wmutex, p) ? 1 : 0),
   (p) => {
     p.needTime--;
@@ -64,11 +74,8 @@ const writer: Array<(p: PCB) => number> = [
 
 /**
  * 读者进程函数
- * @returns 0 阻塞
- * @returns 1 执行完毕
- * @returns 2 循环
  */
-const reader: Array<(p: PCB) => number> = [
+const reader: Array<RunFunction> = [
   (p) => (Primitives.P(Rmutex, p) ? 1 : 0),
   (p) => {
     if (readcount == 0) {
@@ -102,8 +109,8 @@ const reader: Array<(p: PCB) => number> = [
 // 主函数
 OS.start(
   async () => {
-    // await sleep(100);
-    await OS.sleep(10);
+    await OS.sleep(100);
+    // await OS.sleep(10);
     // 载入就绪的进程
     if (!ProcessController.getLogsEmpty()) return true;
     // 随机数

@@ -14,6 +14,7 @@ import {
   ProcessController,
   MemoryController,
 } from "./OS";
+import wcwidth from "wcwidth";
 export class util {
   /**
    * 获取指定数量的空位
@@ -36,15 +37,28 @@ export class util {
    * 截取字符串 不足补空格
    * @param str 字符串
    * @param n 截取长度
+   * @param fillStr 填充字符
+   * 忽略改变颜色的字符
    */
-  static formatStr(str: string, n: number) {
-    if (str.length > n) {
-      return str.slice(0, n - 1) + "…";
+  static formatStr(str: string, n: number, fillStr: string = " "): string {
+    let length = 0;
+    // 如果有中文，占两个字符
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] == "\u001b") {
+        // 跳过改变颜色的字符
+        while (str[i] != "m") {
+          i++;
+        }
+        continue;
+      }
+      length += wcwidth(str[i]);
+      if (length > n) {
+        return str.slice(0, i) + "…";
+      }
     }
-    let str_ = str;
-    for (let i = 0; i < n - str.length; i++) {
-      str_ += " ";
+    for (let i = 0; i < n - length; i++) {
+      str += fillStr;
     }
-    return str_;
+    return str;
   }
 }

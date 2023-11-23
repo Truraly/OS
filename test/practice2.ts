@@ -65,7 +65,6 @@ OS.start(
   },
   () => {
     // 结束
-    if (ReadyList.len() == 0) return false;
-    return true;
+    return !(CPU.CPUtime > 5 && OS.checkNoTask());
   }
 );

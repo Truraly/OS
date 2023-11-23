@@ -34,8 +34,9 @@ export class MemoryController {
   /**
    * 初始化
    */
-  static init(Algorithm: string): void {
+  static init(Algorithm: string, memorySize: number): void {
     MemoryController.MEMORY = new Memory();
+    MemoryController.MEMORY.MEMORY_SIZE = memorySize;
     switch (Algorithm) {
       case "NF":
         this.memoryAlgorithm = new MemoryAlgorithmNF();
@@ -60,4 +61,3 @@ export class Memory {
    */
   MEMORY_SIZE: number = 128;
 }
-

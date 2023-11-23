@@ -31,7 +31,7 @@ export class PCB {
    * @returns 1 程序正常执行
    * @returns 2 当前fun需要再次执行
    */
-  funs: Array<(p: PCB) => number>;
+  runFunctions: RunFunctions[];
   /**
    * 进程剩余任务量
    */
@@ -109,4 +109,14 @@ export enum PStatus {
    * 阻塞->就绪
    */
   blockToReady = 7,
+}
+export interface RunFunctions {
+  /**
+   * 进程函数列表
+   * @param p 进程
+   * @returns 0 被阻塞
+   * @returns 1 程序正常执行
+   * @returns 2 当前fun需要再次执行
+   */
+  (p: PCB): number;
 }

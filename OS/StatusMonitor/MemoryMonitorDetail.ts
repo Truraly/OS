@@ -27,23 +27,21 @@ export class MemoryMonitorDetail extends StatusMonitor {
    * getHead
    */
   getHead(): string {
-    return "内存详情";
+    return " 内存详情";
   }
   /**
    * 获取内存条
    */
   getStatus(): string {
-    let str = "";
+    let str = " ";
     MemoryController.memoryAlgorithm.forEach((block, index) => {
       debuggerLogger.debug("block", block);
       let add = `${block.start} ${block.start + block.size - 1}`;
       str +=
-        `|` +
         (block.status == 1
           ? chalk.bgHex("#66bc7e").bold(add)
-          : chalk.bgGray.bold(add));
+          : chalk.bgGray.bold(add)) + `|`;
     });
-    str += `|`;
     return str;
   }
 }

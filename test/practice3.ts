@@ -13,6 +13,8 @@ import {
   OS,
   ProcessController,
   SystemStatusMonitor,
+  ProcessStatusMonitor,
+  PStatus,
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -62,16 +64,6 @@ OS.start(
   },
   () => {
     // 结束
-    if (
-      ReadyList.len() == 0 &&
-      SystemStatusMonitor.PCBStatusListHis.every((item) =>
-        item.every((item) => item == 0)
-      ) &&
-      CPU.CPUtime > 5
-    ) {
-      return false;
-    }
-
-    return true;
+    return !(CPU.CPUtime > 5 && OS.checkNoTask());
   }
 );

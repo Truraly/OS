@@ -26,7 +26,7 @@ export class ReadyList {
    */
   static push(p: PCB) {
     this.readyList.push(p);
-   ProcessStatusMonitor.instance.setShowStatus(p, PStatus.ready);
+   ProcessStatusMonitor.instance?.setShowStatus(p, PStatus.ready);
     p.status = PStatus.ready;
   }
   /**

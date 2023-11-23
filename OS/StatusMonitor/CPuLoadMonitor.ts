@@ -21,12 +21,12 @@ export class CPuLoadMonitor extends StatusMonitor {
   /**
    * 单例对象
    */
-  static instance: CPuLoadMonitor;
+  static instance: CPuLoadMonitor | undefined;
   /**
    * getHead
    */
   getHead(): string {
-    return util.formatStr("负载", Math.max(CPU.CPU_COUNT, 4) - 2) + "|";
+    return util.formatStr("负载", Math.max(CPU.CPU_COUNT, 4)) + "|";
   }
   /**
    * 负载计数
@@ -42,5 +42,10 @@ export class CPuLoadMonitor extends StatusMonitor {
     }
     return util.formatStr(str, Math.max(CPU.CPU_COUNT, 4)) + "|";
   }
-
+  /**
+   * 设置负载
+   */
+  setLoad(load: number) {
+    this.loadCount = load;
+  }
 }

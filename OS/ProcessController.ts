@@ -15,6 +15,7 @@ import {
   util,
   ProcessStatusMonitor,
   OS,
+  AdditionalMonitor,
 } from "./OS";
 
 export class ProcessController {
@@ -47,7 +48,7 @@ export class ProcessController {
     }
     //
     let newPCB: PCB = {
-      funs: new Array<(p: PCB) => number>(...fun),
+      runFunctions: new Array<(p: PCB) => number>(...fun),
       pname: name,
       needTime: time,
       status: PStatus.ready,
@@ -59,14 +60,20 @@ export class ProcessController {
       memory: null,
       joinTime: CPU.CPUtime,
     };
-
+    // 检查是否有空位
+    if (!ProcessController.getLogsEmpty()) {
+      //   logger.error("PCB已满,创建进程失败");
+      AdditionalMonitor.instance?.setMessage("PCB已满,创建进程失败");
+      return null;
+    }
     // 检查是否有空位
     let MemoryBlock = MemoryController.memoryAlgorithm.distributeMemory(
       memory,
       new Number(newPCB.pid).valueOf()
     );
     if (MemoryBlock == null) {
-      logger.error("内存不足");
+      //   logger.error("内存不足");
+      AdditionalMonitor.instance?.setMessage("内存不足,创建进程失败");
       return null;
     }
     newPCB.memory = MemoryBlock as MemoryBlock;
@@ -74,15 +81,16 @@ export class ProcessController {
     for (let i = 0; i < ProcessController.PCBList.length; i++) {
       if (!ProcessController.PCBList[i]) {
         ProcessController.PCBList[i] = newPCB;
-        ProcessStatusMonitor.instance.PCBStatusListHis[0][i] = 1;
+        if (ProcessStatusMonitor.instance) {
+          ProcessStatusMonitor.instance.PCBStatusListHis[0][i] = 1;
+        }
         // logger.debug("创建进程", newPCB.pname, "成功");
-        ProcessStatusMonitor.instance.setShowStatus(newPCB, PStatus.ready);
+        ProcessStatusMonitor.instance?.setShowStatus(newPCB, PStatus.ready);
         newPCB.status = PStatus.ready;
         ReadyList.push(newPCB);
         return newPCB;
       }
     }
-    ProcessController.PCBList.push(newPCB);
     logger.error("PCB已满");
     return null;
   }

@@ -32,7 +32,7 @@ export class MemoryMonitorBar extends StatusMonitor {
    * getHead
    */
   getHead(): string {
-    return util.formatStr("内存条", this.memoryBarLength - 3) + "|";
+    return util.formatStr("内存条", this.memoryBarLength) + "|";
   }
   /**
    * * 打印内存 进度条形式
@@ -49,17 +49,17 @@ export class MemoryMonitorBar extends StatusMonitor {
       let start = block.start;
       let end = block.start + block.size - 1;
       for (let i = start; i <= end; i++) {
-        if (Math.floor(i / p) > 50) {
-          console.log("block", block);
-          console.log("P", p);
-          console.log("i", i);
-          console.log(
-            "MemoryController.MEMORY.MEMORY_SIZE",
-            MemoryController.MEMORY.MEMORY_SIZE
-          );
-          console.log("this.memoryBarLength", this.memoryBarLength);
-          process.exit(0);
-        }
+        // if (Math.floor(i / p) > 50) {
+        //   console.log("block", block);
+        //   console.log("P", p);
+        //   console.log("i", i);
+        //   console.log(
+        //     "MemoryController.MEMORY.MEMORY_SIZE",
+        //     MemoryController.MEMORY.MEMORY_SIZE
+        //   );
+        //   console.log("this.memoryBarLength", this.memoryBarLength);
+        //   process.exit(0);
+        // }
         arr[Math.floor(i / p)]++;
       }
     });

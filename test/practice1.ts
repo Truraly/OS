@@ -17,8 +17,9 @@ import chalk from "chalk";
 
 OS.init({
   hardware: {
-    CpuCount: 1,
+    CpuCount: 5,
     MaxPCB: 5,
+    MemorySize: 64,
   },
   software: {
     TimeOut: 0,
@@ -102,7 +103,6 @@ let readcount = 0;
 // 主函数
 OS.start(
   () => {
-    if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 载入就绪的进程
     test.forEach((item) => {
       // console.log(item);
@@ -111,36 +111,26 @@ OS.start(
       //
       let pname = type + CPU.CPUtime;
       let sleeptime = item[3] as number;
-      // 删除超长的部分
-      pname = pname.slice(0, 4);
-      // 填充空格
-      while (pname.length < 5) pname += " ";
-    //   // 颜色
-    //   if (type == "w") {
-    //     pname = chalk.white.bgBlue.bold(pname);
-    //   } else {
-    //     pname = chalk.white.bgMagenta.bold(pname);
-    //   }
-      let newPCB = ProcessController.createPCB(
+      //   // 颜色
+      //   if (type == "w") {
+      //     pname = chalk.white.bgBlue.bold(pname);
+      //   } else {
+      //     pname = chalk.white.bgMagenta.bold(pname);
+      //   }
+      ProcessController.createPCB(
         pname,
         sleeptime,
         type == "w" ? writer : reader,
         0,
         type == "w" ? 3 : 6
       );
-      if (newPCB != null) {
-        ReadyList.push(newPCB);
-      }
       test.splice(test.indexOf(item), 1);
     });
     // 结束
 
-    if (test.length == 0 && ReadyList.len() == 0) return false;
     return true;
   },
-  () => {
-    return true;
-  }
+  () => !(CPU.CPUtime > 20 && OS.checkNoTask())
 );
 
 /**

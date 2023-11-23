@@ -11,7 +11,9 @@ import {
   CPU,
   Memory,
   OS,
-  SystemStatusMonitor
+  SystemStatusMonitor,
+  ProcessController,
+  AdditionalMonitor,
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -20,11 +22,11 @@ import chalk from "chalk";
 OS.init({
   hardware: {
     CpuCount: 4,
-    MaxPCB: 10,
+    MaxPCB: 7,
+    MemorySize: 48,
   },
   software: {
     TimeOut: 0,
-    Msgif: true,
   },
 });
 
@@ -33,8 +35,7 @@ function s2(p: PCB) {
   if (msg == undefined) {
     throw new Error("消息队列为空");
   }
-  //   console.log(msg);
-  SystemStatusMonitor.ew = msg.replace(/ +/, "进程");
+  AdditionalMonitor.instance?.setMessage(msg.replace(/ +/, "进程"));
   p.front = p.front?.next || null;
   return 1;
 }
@@ -48,16 +49,21 @@ function s1(p: PCB) {
  * @returns 1 执行完毕
  * @returns 2 循环
  */
-let showp: PCB = new PCB(chalk.black.bgWhite.bold("show "), 1, [
-  s1,
-  s2,
-  (p) => {
-    p.funs.unshift(s2);
-    p.funs.unshift(s1);
-    return 2;
-  },
-]);
-ReadyList.push(showp);
+let showp = ProcessController.createPCB(
+  "show",
+  1,
+  [
+    s1,
+    s2,
+    (p) => {
+      p.runFunctions.unshift(s2);
+      p.runFunctions.unshift(s1);
+      return 2;
+    },
+  ],
+  0,
+  3
+);
 
 /**
  * 写者进程函数
@@ -98,7 +104,10 @@ const reader: Array<(p: PCB) => number> = [
   (p) => {
     p.needTime--;
     if (p.needTime > 0) return 2;
-    Primitives.send(showp.pid, new Message_buffer(p.pid, 1, "读取完毕 "));
+    Primitives.send(
+      showp?.pid || "",
+      new Message_buffer(p.pid, 1, "读取完毕 ")
+    );
     return 1;
   },
   (p) => (Primitives.P(Rmutex, p) ? 1 : 0),
@@ -118,33 +127,24 @@ const reader: Array<(p: PCB) => number> = [
  */
 let readcount = 0;
 // 主函数
-CPU.start(
+OS.start(
   () => true,
   async () => {
-    await OS.sleep(200);
-    // 载入就绪的进程
-    if (!SystemStatusMonitor.getLogsEmpty()) return true;
+    await OS.sleep(100);
     // 随机数
     if (Math.random() < 0.7) return true;
     // 随机读者写者
     let type = Math.random() > 0.7 ? "w" : "r";
     // 随机阻塞时间
     let sleeptime = Math.floor(Math.random() * 10) + 2;
-    //
     let pname = type + CPU.CPUtime;
-    // 删除超长的部分
-    pname = pname.slice(0, 4);
-    // 填充空格
-    while (pname.length < 5) pname += " ";
-    // 颜色
-    if (type == "w") {
-      pname = chalk.white.bgBlue.bold(pname);
-    } else {
-      pname = chalk.white.bgMagenta.bold(pname);
-    }
-
-    PCB.createPCB(pname, sleeptime, type == "w" ? writer : reader);
-
+    ProcessController.createPCB(
+      pname,
+      sleeptime,
+      type == "w" ? writer : reader,
+      0,
+      type == "w" ? 5 : 8
+    );
     return true;
   }
 );
