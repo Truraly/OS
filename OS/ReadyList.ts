@@ -8,7 +8,6 @@ import {
   ProcessController,
   SystemStatusMonitor,
 } from "./OS";
-import { P } from "./Primitives";
 /**
  * 就绪列表类
  */
@@ -26,7 +25,7 @@ export class ReadyList {
    */
   static push(p: PCB) {
     this.readyList.push(p);
-    SystemStatusMonitor.showStatus(p, PStatus.ready);
+    SystemStatusMonitor.setShowStatus(p, PStatus.ready);
     p.status = PStatus.ready;
   }
   /**
@@ -58,16 +57,6 @@ export class ReadyList {
    */
   static len(): number {
     return this.readyList.length;
-  }
-  /**
-   * 将就绪的进程输出进入运行状态
-   * @returns 进程
-   */
-  static run() {
-    let p = this.shift();
-    SystemStatusMonitor.showStatus(p, PStatus.run);
-    p.status = PStatus.run;
-    return p;
   }
   /**
    * 打印就绪队列

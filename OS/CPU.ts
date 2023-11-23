@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import {
   logger,
+  debuggerLogger,
   PCB,
   ReadyList,
   Semasphore,
@@ -12,6 +13,7 @@ import {
   SystemStatusMonitor,
   ProcessController,
 } from "./OS";
+import { P } from "./Primitives";
 
 export class CPU {
   /**
@@ -37,40 +39,49 @@ export class CPU {
     // 执行进程
     let length_ = ReadyList.len();
     // 确保本时刻不能有进程同时被2个CPU执行
-    let i = 0;
-    for (; i < length_ && i < CPU.CPU_COUNT; i++) {
-      let p: PCB = ReadyList.run();
-      logger.debug("进程" + p.pname + "开始执行");
+    SystemStatusMonitor.resetLoad();
+    for (
+      ;
+      SystemStatusMonitor.loadCount < length_ &&
+      SystemStatusMonitor.loadCount < CPU.CPU_COUNT;
+      SystemStatusMonitor.loadCount++
+    ) {
+      let p: PCB = ReadyList.shift();
+      SystemStatusMonitor.setShowStatus(p, PStatus.run);
+      p.status = PStatus.run;
+      debuggerLogger.debug("进程" + p.pname + "开始执行");
       while (p.funs.length > 0) {
         let res: number = p.funs[0](p);
         logger.debug("执行函数，res:", res);
-        switch (res) {
-          case 0:
-            logger.debug("进程", p.pname, "阻塞");
-            p.funs.shift();
-            SystemStatusMonitor.showStatus(p, PStatus.runToBlock);
-            break;
-          case 1:
-            p.funs.shift();
-            continue;
-          case 2:
-            logger.debug("进程", p.pname, "时间片用完，进入就绪队列");
-            SystemStatusMonitor.showStatus(p, PStatus.run);
-            p.status = PStatus.ready;
-            ReadyList.rePush(p);
-            break;
-          default:
-            p.funs.shift();
-            continue;
+        if (res == 0) {
+          debuggerLogger.debug("进程", p.pname, "阻塞");
+          p.funs.shift();
+          SystemStatusMonitor.setShowStatus(p, PStatus.runToBlock);
+          p.status = PStatus.block;
+          break;
+        } else if (res == 1) {
+          debuggerLogger.debug("进程", p.pname, "正常执行");
+          p.funs.shift();
+          continue;
+        } else if (res == 2) {
+          debuggerLogger.debug("进程", p.pname, "时间片用完，进入就绪队列");
+          SystemStatusMonitor.setShowStatus(p, PStatus.run);
+          p.status = PStatus.ready;
+          ReadyList.rePush(p);
+          break;
+        } else {
+          p.funs.shift();
+          continue;
         }
       }
       if (p.funs.length == 0) {
         p.status = PStatus.finish;
-        SystemStatusMonitor.showStatus(p, PStatus.finish);
+        debuggerLogger.debug("进程", p.pname, "执行完毕");
+        SystemStatusMonitor.setShowStatus(p, PStatus.finish);
+        debuggerLogger.debug("释放进程", p.pname, "的内存");
+        ProcessController.deletePCB(p);
       }
       logger.debug("进程" + p.pname + "执行完毕", p);
     }
-    // 负载
-    SystemStatusMonitor.loadCount = i;
   }
 }

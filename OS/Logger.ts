@@ -9,23 +9,26 @@ Log4js.configure({
       },
     },
     file: {
-      type: "file",
+      type: "fileSync", // use fileSync instead of file
       filename: "logs/app.log",
-      maxLogSize: 10485760, // max size for log file, in bytes. Once this size is reached, a new log file will be created.
-      backups: 3, // number of backup files to keep
-      compress: true, // compress the backups
+      maxLogSize: 10485760,
+      backups: 3,
+      compress: true,
+      layout: {
+        type: "pattern",
+        pattern: "%d %p %c %m%n",
+      },
     },
-
   },
   categories: {
     default: {
-      appenders: ["OS", "file"], // both appenders will now be used
+      appenders: ["OS"],
       level: "info",
     },
     debugger: {
-        appenders: ["OS", "file"],
-        level: "debug",
-    }
+      appenders: ["file"],
+      level: "debug",
+    },
   },
 });
 

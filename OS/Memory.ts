@@ -15,14 +15,37 @@ import {
 } from "../OS/OS";
 import chalk from "chalk";
 /**
- * 内存模拟对象
- * 使用循环首次适应算法实现内存分配 NF
+ * 内存模拟抽象类
  */
-export class Memory {
+abstract class Memory {
   /**
    * 内存大小 单位 KB
    */
   static MEMORY_SIZE = 128;
+  /**
+   * 初始化
+   */
+  static init(): void {
+    
+  }
+  /**
+   * 分配内存
+   */
+  static distributeMemory(size: number, pid: number): MemoryBlock | null {
+    return null;
+  }
+  /**
+   * 释放内存
+   */
+  static freeMemory(block: MemoryBlock): MemoryBlock {
+    return block;
+  }
+}
+/**
+ * 内存模拟对象
+ * 使用循环首次适应算法实现内存分配 NF
+ */
+export class MemoryNF extends Memory {
   /**
    * 内存访问指针
    */
@@ -36,17 +59,17 @@ export class Memory {
    * 初始化内存
    */
   static init() {
-    Memory.MEMORY_POINTER = {
+    MemoryNF.MEMORY_POINTER = {
       start: 0,
-      size: Memory.MEMORY_SIZE,
+      size: MemoryNF.MEMORY_SIZE,
       status: 0,
       pid: 0,
       last: null as any,
       next: null as any,
     };
-    Memory.MEMORY_POINTER.last = Memory.MEMORY_POINTER;
-    Memory.MEMORY_POINTER.next = Memory.MEMORY_POINTER;
-    Memory.HEAD_POINTER = Memory.MEMORY_POINTER;
+    MemoryNF.MEMORY_POINTER.last = MemoryNF.MEMORY_POINTER;
+    MemoryNF.MEMORY_POINTER.next = MemoryNF.MEMORY_POINTER;
+    MemoryNF.HEAD_POINTER = MemoryNF.MEMORY_POINTER;
   }
 
   /**
@@ -58,8 +81,8 @@ export class Memory {
   static distributeMemory(size: number, pid: number): MemoryBlock | null {
     // logger.info("start Memory.MEMORY_POINTER", Memory.MEMORY_POINTER.start);
     return (
-      Memory.forEach((block: MemoryBlock, index) => {
-        Memory.MEMORY_POINTER = block;
+      MemoryNF.forEach((block: MemoryBlock, index) => {
+        MemoryNF.MEMORY_POINTER = block;
         if (block.status == 0 && block.size >= size) {
           // 占用这个块
           block.status = 1;
@@ -77,7 +100,7 @@ export class Memory {
               next: block.next,
             };
             // 前后合并
-            newBlock = Memory.freeMemory(newBlock);
+            newBlock = MemoryNF.freeMemory(newBlock);
             // 修改指针
             block.next.last = block;
             // 修改指针
@@ -86,7 +109,7 @@ export class Memory {
             return block;
           }
         }
-      }, Memory.MEMORY_POINTER.next) || null
+      }, MemoryNF.MEMORY_POINTER.next) || null
     );
   }
 
@@ -98,7 +121,8 @@ export class Memory {
     block.pid = 0;
     // 如果上一个块空闲
     while (block.last.status == 0 && block.last.start < block.start) {
-      if (block == Memory.MEMORY_POINTER) Memory.MEMORY_POINTER = block.last;
+      if (block == MemoryNF.MEMORY_POINTER)
+        MemoryNF.MEMORY_POINTER = block.last;
       block.last.size += block.size;
       block.last.next = block.next;
       block.next.last = block.last;
@@ -106,7 +130,8 @@ export class Memory {
     }
     // 如果下一个块空闲
     while (block.next.status == 0 && block.next.start > block.start) {
-      if (block.next == Memory.MEMORY_POINTER) Memory.MEMORY_POINTER = block;
+      if (block.next == MemoryNF.MEMORY_POINTER)
+        MemoryNF.MEMORY_POINTER = block;
       block.size += block.next.size;
       block.next = block.next.next;
       block.next.last = block;
@@ -119,7 +144,7 @@ export class Memory {
    */
   static forEach(
     callback: (block: MemoryBlock, index: number) => any,
-    start: MemoryBlock = Memory.HEAD_POINTER
+    start: MemoryBlock = MemoryNF.HEAD_POINTER
   ) {
     let temp: MemoryBlock = start;
     let pointer: MemoryBlock = start;

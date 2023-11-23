@@ -1,5 +1,6 @@
 import {
   logger,
+  debuggerLogger,
   PCB,
   ReadyList,
   Semasphore,
@@ -21,12 +22,7 @@ export class SystemStatusMonitor {
   /**
    * 需要监控的属性
    */
-  static Mon: Array<"PCB" | "MemoryDetail" | "MemoryBar" | "Load"> = [
-    "PCB",
-    "Load",
-    "MemoryBar",
-    "MemoryDetail",
-  ];
+  static Mon: Array<"PCB" | "MemoryDetail" | "MemoryBar" | "Load">;
   /**
    * 打印状态
    */
@@ -35,13 +31,13 @@ export class SystemStatusMonitor {
     SystemStatusMonitor.Mon.forEach((item) => {
       switch (item) {
         case "PCB":
-          str += SystemStatusMonitor.printStatus();
+          str += SystemStatusMonitor.getPCBStatus();
           break;
         case "MemoryBar":
-          str += SystemStatusMonitor.PrintMemoryBar(true);
+          str += SystemStatusMonitor.getMemoryBar(true);
           break;
         case "MemoryDetail":
-          str += SystemStatusMonitor.PrintMemoryDetail(true);
+          str += SystemStatusMonitor.getMemoryDetail(true);
           break;
         case "Load":
           str += SystemStatusMonitor.getLoad();
@@ -98,24 +94,32 @@ export class SystemStatusMonitor {
   /**
    * 刷新监听的进程列表，删除已删除进程
    */
-  static FlushPCBList() {
+  static flushPCBList() {
+    debuggerLogger.debug("刷新PCB列表");
+    debuggerLogger.info(
+      "SystemStatusMonitor.PCBStatusListHis",
+      SystemStatusMonitor.PCBStatusListHis
+    );
     SystemStatusMonitor.PCBStatusListHis.unshift(
       new Array<number>(...SystemStatusMonitor.PCBStatusListHis[0])
+    );
+    debuggerLogger.info(
+      "SystemStatusMonitor.PCBStatusListHis",
+      SystemStatusMonitor.PCBStatusListHis
     );
     let length_ = SystemStatusMonitor.MAX_LENGTH;
     for (let i = 0; i < length_; i++) {
       let p: PCB | null = ProcessController.PCBList[i];
-      if (p == null) continue;
-      if (p.status == PStatus.deleted) {
-        SystemStatusMonitor.showStatus(p, PStatus.empty);
-        ProcessController.PCBList[i] = null;
-      } else if (p.status == PStatus.finish) {
-        SystemStatusMonitor.showStatus(p, PStatus.deleted);
-        p.status = PStatus.deleted;
-      } else {
-        SystemStatusMonitor.showStatus(p, p.status);
+      if (p == null) {
+        SystemStatusMonitor.PCBStatusListHis[0][i] = PStatus.empty;
+        continue;
       }
     }
+    debuggerLogger.info(
+      "SystemStatusMonitor.PCBStatusListHis",
+      SystemStatusMonitor.PCBStatusListHis
+    );
+
     // 删除已经没用的记录
     // 从现在开始往上翻，如果从某一条记录开始，没有任何一个进程是当前有的，那么从这里到之前都是无用的，全部删除
     // 创建相同长度的数组
@@ -133,9 +137,16 @@ export class SystemStatusMonitor {
       // 如果数组全是0，说明这一条记录是无用的
       if (pidarr.every((item) => item == 0)) {
         // 删除后面全部
-        // logger.info("删除无用记录", i);
+        debuggerLogger.debug(
+          "删除无用记录",
+          SystemStatusMonitor.PCBStatusListHis.length - i,
+          "条"
+        );
         SystemStatusMonitor.PCBStatusListHis.splice(i);
-        // logger.info("PCB.PCBStatusListHis.length",SystemStatusMonitor.PCBStatusListHis.length);
+        debuggerLogger.info(
+          "PCB.PCBStatusListHis.length",
+          SystemStatusMonitor.PCBStatusListHis.length
+        );
         return;
       }
     }
@@ -190,7 +201,12 @@ export class SystemStatusMonitor {
   /**
    * 打印进程信息
    */
-  static printStatus(): string {
+  static getPCBStatus(): string {
+    debuggerLogger.debug("打印进程信息");
+    debuggerLogger.debug(
+      "PCBStatusListHis",
+      SystemStatusMonitor.PCBStatusListHis
+    );
     let str = "";
     /**
      * 进程日志
@@ -209,25 +225,21 @@ export class SystemStatusMonitor {
       if (PcStatus == PStatus.empty) {
         // 打印空格
       } else if (PcStatus == PStatus.deleted) {
-        // 打印空格
-        // 释放内存
-        ProcessController.deletePCB(ProcessController.PCBList[i] as PCB);
       } else if (
         SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.empty ||
         SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.deleted
       ) {
         // 如果上一位为0，则打印进程名
-        msg = (ProcessController.PCBList[i] as PCB).pname;
+        msg = (ProcessController.PCBList[i] as PCB)?.pname || "unknown";
       } else if (
         SystemStatusMonitor.PCBStatusListHis[2][i] == PStatus.empty ||
         SystemStatusMonitor.PCBStatusListHis[2][i] == PStatus.deleted
       ) {
         // 打印进程ID
-        msg = (ProcessController.PCBList[i] as PCB).pid;
+        msg = (ProcessController.PCBList[i] as PCB)?.pid;
       } else if (PcStatus == PStatus.finish) {
         // 打印总共运行时间
-        msg =
-          "PT" + (CPU.CPUtime - (ProcessController.PCBList[i] as PCB).joinTime);
+        msg = "PT"; //  + (CPU.CPUtime - (ProcessController.PCBList[i] as PCB).joinTime);
       }
       str +=
         SystemStatusMonitor.getBgColor(
@@ -236,8 +248,6 @@ export class SystemStatusMonitor {
         SystemStatusMonitor.getColor(PcStatus) +
         SystemStatusMonitor.getBgColor(" |");
     }
-    // 更新进程状态
-    SystemStatusMonitor.FlushPCBList();
     return str;
   }
   /**
@@ -245,8 +255,8 @@ export class SystemStatusMonitor {
    *  @param status number
    *  0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
    */
-  static showStatus(p: PCB, status: PStatus) {
-    logger.debug("PCB.PCBList", ProcessController.PCBList);
+  static setShowStatus(p: PCB, status: PStatus) {
+    debuggerLogger.debug("设置进程", p.pname, "展示状态为", status);
     let index = ProcessController.PCBList.findIndex((item) => item == p);
     if (index == -1) {
       throw new Error("进程不存在");
@@ -264,7 +274,7 @@ export class SystemStatusMonitor {
   /**
    * 打印内存
    */
-  static PrintMemoryDetail(ret: boolean = false) {
+  static getMemoryDetail(ret: boolean = false) {
     let str = "";
     Memory.forEach((block, index) => {
       let add = `${block.start} ${block.start + block.size - 1}`;
@@ -284,7 +294,7 @@ export class SystemStatusMonitor {
    * @param len 进度条长度
    * @param ret 是否返回
    */
-  static PrintMemoryBar(ret: boolean = false) {
+  static getMemoryBar(ret: boolean = false) {
     let str = "";
     let p = Memory.MEMORY_SIZE / SystemStatusMonitor.MEMORY_BAR_LENGTH;
     // 统计每一段内存被占用的数量

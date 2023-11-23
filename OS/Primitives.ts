@@ -55,7 +55,7 @@ export function P(s: Semasphore, p: PCB): boolean {
   // 如果s.value<0，进程插入s.queue中
   if (s.value < 0) {
     s.queue.push(p);
-    SystemStatusMonitor.showStatus(p, PStatus.block);
+    SystemStatusMonitor.setShowStatus(p, PStatus.block);
     this.status = PStatus.block;
     return false;
   }
@@ -73,7 +73,7 @@ export function V(s: Semasphore) {
     let p: PCB | undefined = s.queue.shift();
     if (p) {
       p.status = PStatus.ready;
-      SystemStatusMonitor.showStatus(p, PStatus.blockToReady);
+      SystemStatusMonitor.setShowStatus(p, PStatus.blockToReady);
       ReadyList.rePush(p);
     }
   }

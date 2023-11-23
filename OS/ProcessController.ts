@@ -10,10 +10,10 @@ import {
   Memory,
   MemoryBlock,
   SystemStatusMonitor,
+  debuggerLogger,
 } from "./OS";
 
 export class ProcessController {
-
   /**
    * 监听的进程列表
    */
@@ -75,12 +75,13 @@ export class ProcessController {
         ProcessController.PCBList[i] = newPCB;
         SystemStatusMonitor.PCBStatusListHis[0][i] = 1;
         // logger.debug("创建进程", newPCB.pname, "成功");
-        SystemStatusMonitor.showStatus(newPCB, PStatus.ready);
+        SystemStatusMonitor.setShowStatus(newPCB, PStatus.ready);
         newPCB.status = PStatus.ready;
         ReadyList.push(newPCB);
         return newPCB;
       }
     }
+    ProcessController.PCBList.push(newPCB);
     logger.error("PCB已满");
     return null;
   }
@@ -88,20 +89,18 @@ export class ProcessController {
    * 删除进程
    */
   static deletePCB(pcb: PCB) {
+    debuggerLogger.debug("删除进程", pcb.pname);
     let index = ProcessController.PCBList.indexOf(pcb);
     if (index == -1) {
-      logger.error("进程不存在");
+      debuggerLogger.error("进程不存在");
       return;
     }
+
     ProcessController.PCBList[index] = null;
-    SystemStatusMonitor.PCBStatusListHis[0][index] = 0;
-    SystemStatusMonitor.PCBStatusListHis[1][index] = 0;
-    SystemStatusMonitor.PCBStatusListHis[2][index] = 0;
-    SystemStatusMonitor.showStatus(pcb, PStatus.deleted);
     pcb.status = PStatus.deleted;
     ReadyList.readyList = ReadyList.readyList.filter((item) => item != pcb);
     if (pcb.memory) Memory.freeMemory(pcb.memory);
-    logger.debug("删除进程", pcb.pname, "成功");
+    debuggerLogger.debug("删除进程", pcb.pname, "成功");
   }
 
   /**
@@ -113,8 +112,9 @@ export class ProcessController {
       null
     );
     SystemStatusMonitor.PCBStatusListHis = [
-      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(0),
-      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(0),
+      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
+      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
+      new Array<number>(SystemStatusMonitor.MAX_LENGTH).fill(PStatus.empty),
     ];
   }
 
@@ -134,6 +134,4 @@ export class ProcessController {
     }
     return null;
   }
-
-
 }

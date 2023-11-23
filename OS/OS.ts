@@ -5,7 +5,7 @@ import { Semasphore } from "./Semasphore";
 import { Message_buffer } from "./Message_buffer";
 import * as Primitives from "./Primitives";
 import { CPU } from "./CPU";
-import { Memory, MemoryBlock } from "./Memory";
+import { MemoryNF, MemoryBlock } from "./Memory";
 import { SystemStatusMonitor } from "./SystemStatusMonitor";
 import { ProcessController } from "./ProcessController";
 export {
@@ -18,7 +18,7 @@ export {
   Primitives,
   CPU,
   PStatus,
-  Memory,
+  MemoryNF as Memory,
   MemoryBlock,
   SystemStatusMonitor,
   ProcessController,
@@ -91,35 +91,49 @@ export class OS {
       showCPULoad?: boolean;
       showMemory?: boolean;
       showMemoryDetail?: boolean;
-      showStatus?: boolean;
+      showProcessStatus?: boolean;
     };
   }) {
     // 提供默认配置
-    let config_ = Object.assign(
-      {
-        hardware: {
+    let config_ = {
+      hardware: Object.assign(
+        {
           CpuCount: 1,
           MemorySize: 128,
           MaxPCB: 5,
         },
-        software: {
+        config?.hardware || {}
+      ),
+      software: Object.assign(
+        {
           TimeOut: 0,
         },
-        log: {
+        config?.software || {}
+      ),
+      log: Object.assign(
+        {
           showCPULoad: true,
           showMemory: true,
-          showMemoryDetail: false,
-          showStatus: true,
+          showMemoryDetail: true,
+          showProcessStatus: true,
         },
-      },
-      config
-    );
+        config?.log || {}
+      ),
+    };
 
+    console.log(config_);
     CPU.CPU_COUNT = config_.hardware.CpuCount;
     ProcessController.init(config_.hardware.MaxPCB);
-    Memory.init();
+    MemoryNF.init();
     CPU.TIME_OUT = config_.software.TimeOut;
     ReadyList.init();
+
+    SystemStatusMonitor.Mon = [];
+    if (config_.log.showProcessStatus) SystemStatusMonitor.Mon.push("PCB");
+    if (config_.log.showCPULoad) SystemStatusMonitor.Mon.push("Load");
+    if (config_.log.showMemory) SystemStatusMonitor.Mon.push("MemoryBar");
+    if (config_.log.showMemoryDetail)
+      SystemStatusMonitor.Mon.push("MemoryDetail");
 
     // 打印配置信息
     logger.info("CPU数量：", CPU.CPU_COUNT);
@@ -139,7 +153,7 @@ export class OS {
     logger.info("-----------------------------------------------------------");
     SystemStatusMonitor.printSystemStatusHead();
     // 计数器+1
-    while (++CPU.CPUtime) {
+    while (true) {
       // 执行前
       if (!(await beforeDo())) {
         logger.info("进程执行前退出");
@@ -161,12 +175,13 @@ export class OS {
       if (!(await afterDo())) {
         logger.info("进程执行后退出");
         // 推出程序并打印进程状态
-        SystemStatusMonitor.printStatus();
+        SystemStatusMonitor.getPCBStatus();
         break;
       }
-      // 打印进程状态
+      // 打印系统状态
       SystemStatusMonitor.printSystemStatus();
-      SystemStatusMonitor.resetLoad();
+      // 刷新进程状态
+      SystemStatusMonitor.flushPCBList();
     }
   }
 

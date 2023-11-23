@@ -2,6 +2,7 @@
 /////////////////////////////////////////////////
 import {
   logger,
+  debuggerLogger,
   PCB,
   ReadyList,
   Semasphore,
@@ -25,6 +26,9 @@ OS.init({
   software: {
     TimeOut: 0,
   },
+  log: {
+    // showCPULoad:false,
+  },
 });
 
 /**
@@ -34,33 +38,39 @@ const pro: Array<(p: PCB) => number> = [
   (p) => {
     // 需要时间-1
     p.needTime--;
-    // 优先级/2
-    p.priority = Math.ceil(p.priority / 2);
-    // 如果时间为0，进程执行完毕
     if (p.needTime > 0) return 2;
+    // 如果时间为0，进程执行完毕
     return 1;
   },
 ];
-// 创建进程
-ProcessController.createPCB("p1   ", 10, pro, 0, 10);
-ProcessController.createPCB("p3   ", 3, pro, 0, 4);
-ProcessController.createPCB("px   ", 1, pro, 0, 12);
-ProcessController.createPCB("p2   ", 4, pro, 0, 6);
+
 // 运行
 OS.start(
-  () => true,
   () => {
+    debuggerLogger.debug("当前时间片：", CPU.CPUtime);
     if (CPU.CPUtime == 3) {
       ProcessController.createPCB("p4   ", 2, pro, 0, 6);
+    } else if (CPU.CPUtime == 0) {
+      // 创建进程
+      ProcessController.createPCB("p1   ", 10, pro, 0, 10);
+      ProcessController.createPCB("p3   ", 3, pro, 0, 4);
+      ProcessController.createPCB("px   ", 1, pro, 0, 12);
+      ProcessController.createPCB("p2   ", 4, pro, 0, 6);
     }
+    return true;
+  },
+  () => {
     // 结束
     if (
       ReadyList.len() == 0 &&
       SystemStatusMonitor.PCBStatusListHis.every((item) =>
         item.every((item) => item == 0)
-      )
-    )
+      ) &&
+      CPU.CPUtime > 5
+    ) {
       return false;
+    }
+
     return true;
   }
 );
