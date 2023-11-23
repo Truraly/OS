@@ -12,6 +12,7 @@ import {
   SystemStatusMonitor,
   debuggerLogger,
   MemoryController,
+  util
 } from "./OS";
 
 export class ProcessController {
@@ -49,7 +50,7 @@ export class ProcessController {
       needTime: time,
       status: PStatus.ready,
       priority: priority,
-      pid: SystemStatusMonitor.formatStr(
+      pid: util.formatStr(
         (ProcessController.processCount++).toString(),
         5
       ),

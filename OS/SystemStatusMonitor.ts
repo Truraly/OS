@@ -12,8 +12,12 @@ import {
   MemoryBlock,
   ProcessController,
   MemoryController,
+  util,
 } from "./OS";
 import chalk from "chalk";
+
+
+
 
 export class SystemStatusMonitor {
   /**
@@ -31,7 +35,7 @@ export class SystemStatusMonitor {
    */
   static printSystemStatus() {
     debuggerLogger.debug("CPU.CPUtime", CPU.CPUtime);
-    let str = `| ${SystemStatusMonitor.formatStr(
+    let str = `| ${util.formatStr(
       Math.floor(CPU.CPUtime % 1000).toString(),
       3
     )} |`;
@@ -190,38 +194,6 @@ export class SystemStatusMonitor {
   static PCBStatusListHis: Array<Array<number>> = [];
 
   /**
-   * 获取指定数量的空位
-   */
-  static getEmpty(n: number): string {
-    let str = "";
-    for (let i = 0; i < n; i++) {
-      str += " ";
-    }
-    return str;
-  }
-  /**
-   * 将字符出传转为指定背景的字符
-   * @param str 字符串
-   */
-  static getBgColor(str: string) {
-    return [chalk.bgHex("#262626"), chalk.white][CPU.CPUtime % 2](str);
-  }
-  /**
-   * 截取字符串 不足补空格
-   * @param str 字符串
-   * @param n 截取长度
-   */
-  static formatStr(str: string, n: number) {
-    if (str.length > n) {
-      return str.slice(0, n - 1) + "…";
-    }
-    let str_ = str;
-    for (let i = 0; i < n - str.length; i++) {
-      str_ += " ";
-    }
-    return str_;
-  }
-  /**
    * 打印进程信息
    */
   static getPCBStatus(): string {
@@ -250,13 +222,15 @@ export class SystemStatusMonitor {
       } else if (PcStatus == PStatus.deleted) {
       } else if (
         SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.empty ||
-        SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.deleted
+        SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.deleted ||
+        SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.finish
       ) {
         // 如果上一位为0，则打印进程名
         msg = (ProcessController.PCBList[i] as PCB)?.pname || "unknown";
       } else if (
         SystemStatusMonitor.PCBStatusListHis[2][i] == PStatus.empty ||
-        SystemStatusMonitor.PCBStatusListHis[2][i] == PStatus.deleted
+        SystemStatusMonitor.PCBStatusListHis[2][i] == PStatus.deleted ||
+        SystemStatusMonitor.PCBStatusListHis[1][i] == PStatus.finish
       ) {
         // 打印进程ID
         msg = (ProcessController.PCBList[i] as PCB)?.pid;
@@ -265,11 +239,11 @@ export class SystemStatusMonitor {
         msg = "PT"; //  + (CPU.CPUtime - (ProcessController.PCBList[i] as PCB).joinTime);
       }
       str +=
-        SystemStatusMonitor.getBgColor(
-          ` ${SystemStatusMonitor.formatStr(msg, 5)} `
+        util.getBgColor(
+          ` ${util.formatStr(msg, 5)} `
         ) +
         SystemStatusMonitor.getColor(PcStatus) +
-        SystemStatusMonitor.getBgColor(" |");
+        util.getBgColor(" |");
     }
     return str;
   }
@@ -361,7 +335,7 @@ export class SystemStatusMonitor {
     MemoryController.memoryAlgorithm.forEach((block, index) => {
       if (block.status == 1) UseCount += block.size;
     });
-    return SystemStatusMonitor.formatStr(
+    return util.formatStr(
       (
         Math.round((UseCount / MemoryController.MEMORY.MEMORY_SIZE) * 1000) / 10
       ).toString() + "%",
@@ -383,7 +357,7 @@ export class SystemStatusMonitor {
     for (let i = 0; i < SystemStatusMonitor.loadCount; i++) {
       str += "*";
     }
-    return SystemStatusMonitor.formatStr(str, Math.max(CPU.CPU_COUNT, 4)) + "|";
+    return util.formatStr(str, Math.max(CPU.CPU_COUNT, 4)) + "|";
   }
   /**
    * 重置负载
@@ -391,17 +365,6 @@ export class SystemStatusMonitor {
   static resetLoad() {
     SystemStatusMonitor.loadCount = 0;
   }
-}
-
-/**
- * 一位数补零
- * @param num
- * @param type
- * @returns
- */
-function o_t_t(num: number, type: string = " ") {
-  num = num % 100;
-  return num < 10 ? type + num : num.toString();
 }
 
 /**

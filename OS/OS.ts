@@ -13,6 +13,7 @@ import {
 } from "./Memory/MemoryController";
 import { SystemStatusMonitor } from "./SystemStatusMonitor";
 import { ProcessController } from "./ProcessController";
+import { util } from "./util";
 export {
   logger,
   debuggerLogger,
@@ -29,6 +30,7 @@ export {
   MemoryController,
   SystemStatusMonitor,
   ProcessController,
+  util,
 };
 
 export interface Hardware {
