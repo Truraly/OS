@@ -11,6 +11,7 @@ import {
   MemoryBlock,
   SystemStatusMonitor,
   debuggerLogger,
+  MemoryController,
 } from "./OS";
 
 export class ProcessController {
@@ -60,7 +61,7 @@ export class ProcessController {
     };
 
     // 检查是否有空位
-    let MemoryBlock = Memory.distributeMemory(
+    let MemoryBlock = MemoryController.memoryAlgorithm.distributeMemory(
       memory,
       new Number(newPCB.pid).valueOf()
     );
@@ -68,7 +69,7 @@ export class ProcessController {
       logger.error("内存不足");
       return null;
     }
-    newPCB.memory = MemoryBlock;
+    newPCB.memory = MemoryBlock as MemoryBlock;
     // 插入就绪队列
     for (let i = 0; i < ProcessController.PCBList.length; i++) {
       if (!ProcessController.PCBList[i]) {
@@ -99,7 +100,7 @@ export class ProcessController {
     ProcessController.PCBList[index] = null;
     pcb.status = PStatus.deleted;
     ReadyList.readyList = ReadyList.readyList.filter((item) => item != pcb);
-    if (pcb.memory) Memory.freeMemory(pcb.memory);
+    if (pcb.memory) MemoryController.memoryAlgorithm.freeMemory(pcb.memory);
     debuggerLogger.debug("删除进程", pcb.pname, "成功");
   }
 

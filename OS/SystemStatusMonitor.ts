@@ -11,6 +11,7 @@ import {
   Memory,
   MemoryBlock,
   ProcessController,
+  MemoryController,
 } from "./OS";
 import chalk from "chalk";
 
@@ -276,7 +277,7 @@ export class SystemStatusMonitor {
    */
   static getMemoryDetail(ret: boolean = false) {
     let str = "";
-    Memory.forEach((block, index) => {
+    MemoryController.memoryAlgorithm.forEach((block, index) => {
       let add = `${block.start} ${block.start + block.size - 1}`;
       str +=
         `|` +
@@ -296,10 +297,12 @@ export class SystemStatusMonitor {
    */
   static getMemoryBar(ret: boolean = false) {
     let str = "";
-    let p = Memory.MEMORY_SIZE / SystemStatusMonitor.MEMORY_BAR_LENGTH;
+    let p =
+      MemoryController.MEMORY.MEMORY_SIZE /
+      SystemStatusMonitor.MEMORY_BAR_LENGTH;
     // 统计每一段内存被占用的数量
     let arr = new Array(SystemStatusMonitor.MEMORY_BAR_LENGTH).fill(0);
-    Memory.forEach((block, index) => {
+    MemoryController.memoryAlgorithm.forEach((block, index) => {
       // logger.warn(block.status);
       if (block.status == 0) return;
       let start = block.start;

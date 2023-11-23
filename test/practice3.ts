@@ -25,6 +25,7 @@ OS.init({
   },
   software: {
     TimeOut: 0,
+    MemoryAlgorithm: "NF",
   },
   log: {
     // showCPULoad:false,

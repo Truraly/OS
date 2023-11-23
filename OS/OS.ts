@@ -5,7 +5,12 @@ import { Semasphore } from "./Semasphore";
 import { Message_buffer } from "./Message_buffer";
 import * as Primitives from "./Primitives";
 import { CPU } from "./CPU";
-import { MemoryNF, MemoryBlock } from "./Memory";
+import {
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+} from "./Memory/MemoryController";
 import { SystemStatusMonitor } from "./SystemStatusMonitor";
 import { ProcessController } from "./ProcessController";
 export {
@@ -18,8 +23,10 @@ export {
   Primitives,
   CPU,
   PStatus,
-  MemoryNF as Memory,
-  MemoryBlock,
+  Memory,
+  MemoryAlgorithmNF as MemoryNF,
+  MemoryBlockNF as MemoryBlock,
+  MemoryController,
   SystemStatusMonitor,
   ProcessController,
 };
@@ -45,9 +52,9 @@ export interface Software {
    */
   TimeOut: number;
   /**
-   * 是否显示额外信息
+   * 内存分配算法
    */
-  Msgif: boolean;
+  MemoryAlgorithm: "NF" | "FF";
 }
 
 export interface LogConfig {
@@ -86,6 +93,7 @@ export class OS {
     };
     software?: {
       TimeOut?: number;
+      MemoryAlgorithm?: "NF" | "FF";
     };
     log?: {
       showCPULoad?: boolean;
@@ -107,6 +115,7 @@ export class OS {
       software: Object.assign(
         {
           TimeOut: 0,
+          MemoryAlgorithm: "NF",
         },
         config?.software || {}
       ),
@@ -124,7 +133,7 @@ export class OS {
     console.log(config_);
     CPU.CPU_COUNT = config_.hardware.CpuCount;
     ProcessController.init(config_.hardware.MaxPCB);
-    MemoryNF.init();
+    MemoryController.init(config_.software.MemoryAlgorithm);
     CPU.TIME_OUT = config_.software.TimeOut;
     ReadyList.init();
 
@@ -138,6 +147,9 @@ export class OS {
     // 打印配置信息
     logger.info("CPU数量：", CPU.CPU_COUNT);
     logger.info("监控最大大小：", SystemStatusMonitor.MAX_LENGTH);
+    logger.info("超时时间：", CPU.TIME_OUT);
+    logger.info("内存大小：", MemoryController.MEMORY.MEMORY_SIZE);
+    logger.info("内存分配算法：", config_.software.MemoryAlgorithm);
   }
   /**
    * 启动操作系统

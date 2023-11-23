@@ -13,7 +13,6 @@ import {
   SystemStatusMonitor,
   ProcessController,
 } from "./OS";
-import { P } from "./Primitives";
 
 export class CPU {
   /**
