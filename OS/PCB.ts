@@ -1,17 +1,35 @@
-import chalk from "chalk";
-import process from "process";
 import {
+  CPU,
   logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
+
+  send,
+  P,
+  V,
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  Memory,
-  MemoryBlock,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
   SystemStatusMonitor,
-  CPU,
-  ProcessController,
-} from "./OS";
+  util,
+} from "./index";
 
 export class PCB {
   //////////////////////////////////////////////////////////////
@@ -54,7 +72,7 @@ export class PCB {
   /**
    * 消息队列队首指针
    */
-  front: Message_buffer | null;
+  front:Message_buffer | null;
   /**
    * 消息队列互斥信号量
    */

@@ -16,7 +16,7 @@ import {
   SystemStatusMonitor,
   ProcessController,
   type RunFunctions as RunFunction,
-} from "../OS/OS";
+} from "../OS";
 /////////////////////////////////////////
 // 系统配置
 OS.init({

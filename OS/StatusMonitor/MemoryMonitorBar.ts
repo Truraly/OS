@@ -1,15 +1,37 @@
 import chalk from "chalk";
 import {
+  CPU,
+  logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
   PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
   ProcessController,
+  ReadyList,
+  Semasphore,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
   util,
-  OS,
-  MemoryController,
-  CPU,
-} from "../OS";
-import { StatusMonitor } from "./StatusMonitor";
+} from "../index";
 export class MemoryMonitorBar extends StatusMonitor {
   /**
    * 内存条长度
@@ -39,11 +61,11 @@ export class MemoryMonitorBar extends StatusMonitor {
    */
   getStatus(): string {
     let str = "";
-    let p = MemoryController.MEMORY.MEMORY_SIZE / this.memoryBarLength;
+    let p =MemoryController.MEMORY.MEMORY_SIZE / this.memoryBarLength;
     // 统计每一段内存被占用的数量
     let arr = new Array(this.memoryBarLength).fill(0);
     // console.log("arr.length", arr.length);
-    MemoryController.memoryAlgorithm.forEach((block, index) => {
+   MemoryController.memoryAlgorithm.forEach((block, index) => {
       // logger.warn(block.status);
       if (block.status == 0) return;
       let start = block.start;
@@ -55,7 +77,7 @@ export class MemoryMonitorBar extends StatusMonitor {
         //   console.log("i", i);
         //   console.log(
         //     "MemoryController.MEMORY.MEMORY_SIZE",
-        //     MemoryController.MEMORY.MEMORY_SIZE
+        //    MemoryController.MEMORY.MEMORY_SIZE
         //   );
         //   console.log("this.memoryBarLength", this.memoryBarLength);
         //   process.exit(0);

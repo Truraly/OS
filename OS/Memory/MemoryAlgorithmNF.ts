@@ -1,5 +1,36 @@
-import { MemoryController } from "./MemoryController";
-import { MemoryAlgorithm, MemoryBlock } from "./MemoryAlgorithm";
+import chalk from "chalk";
+import {
+  CPU,
+  logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
+  PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
+  ProcessController,
+  ReadyList,
+  Semasphore,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "../index";
 /**
  * 使用循环首次适应算法实现内存分配 NF = Next Fit
  */
@@ -113,7 +144,6 @@ export class MemoryAlgorithmNF extends MemoryAlgorithm {
       let res = callback(pointer, index++);
       if (res) return res;
       pointer = pointer.next;
-      
     }
   }
 }
@@ -131,4 +161,3 @@ export interface MemoryBlockNF extends MemoryBlock {
    */
   next: MemoryBlockNF;
 }
-

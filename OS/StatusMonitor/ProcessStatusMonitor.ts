@@ -1,14 +1,37 @@
 import chalk from "chalk";
 import {
+  CPU,
+  logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
   PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
   ProcessController,
+  ReadyList,
+  Semasphore,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  StatusMonitor,
+  SystemStatusMonitor,
   util,
-  OS,
-  logger,
-} from "../OS";
-import { StatusMonitor } from "./StatusMonitor";
+} from "../index";
 
 export class ProcessStatusMonitor extends StatusMonitor {
   /**
@@ -156,13 +179,13 @@ export class ProcessStatusMonitor extends StatusMonitor {
         this.PCBStatusListHis[1][i] == PStatus.finish
       ) {
         // 打印进程ID
-        msg = (ProcessController.PCBList[i] as PCB)?.pid;
+        msg = ( ProcessController.PCBList[i] as  PCB)?.pid;
       } else if (PcStatus == PStatus.finish) {
         // 打印总共运行时间
         msg = "PT"; //  + (CPU.CPUtime - (ProcessController.PCBList[i] as PCB).joinTime);
       }
       str +=
-        util.getBgColor(` ${util.formatStr(msg, 5)} `) +
+        util.getBgColor(` ${ util.formatStr(msg, 5)} `) +
         this.getColor(PcStatus) +
         util.getBgColor(" |");
     }
@@ -175,7 +198,7 @@ export class ProcessStatusMonitor extends StatusMonitor {
    */
   getHead(): string {
     let str = "";
-    for (let i = 0; i < OS.PROCESS_NUM_MAX; i++) {
+    for (let i = 0; i <  OS.PROCESS_NUM_MAX; i++) {
       str += util.getBgColor(`进程 状态|`);
     }
     return str;
@@ -185,9 +208,9 @@ export class ProcessStatusMonitor extends StatusMonitor {
    *  @param status number
    *  0:空位，1:就绪，2:执行，3:阻塞，4:已执行完毕，5:运作转阻塞，6:已删除
    */
-  setShowStatus(p: PCB, status: PStatus) {
+  setShowStatus(p:  PCB, status: PStatus) {
     debuggerLogger.debug("设置进程", p.pname, "展示状态为", status);
-    let index = ProcessController.PCBList.findIndex((item) => item == p);
+    let index =  ProcessController.PCBList.findIndex((item) => item == p);
     if (index == -1) {
       throw new Error("进程不存在");
     }
@@ -236,7 +259,7 @@ export class ProcessStatusMonitor extends StatusMonitor {
       color: chalk.bgHex("#eb6600").bold(" "),
     },
     {
-      PStatus: PStatus.deleted,
+      PStatus:  PStatus.deleted,
       name_: "已删除",
       color: chalk.bgHex("#404040").bold(" "),
     },

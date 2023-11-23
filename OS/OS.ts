@@ -1,53 +1,36 @@
-import { logger, debuggerLogger } from "./Logger";
-import { PCB, PStatus, RunFunctions } from "./PCB";
-import { ReadyList } from "./ReadyList";
-import { Semasphore } from "./Semasphore";
-import { Message_buffer } from "./Message_buffer";
-import * as Primitives from "./Primitives";
-import { CPU } from "./CPU";
 import {
+  CPU,
+  logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
   MemoryAlgorithmNF,
   MemoryBlockNF,
   MemoryController,
   Memory,
-} from "./Memory/MemoryController";
-import { SystemStatusMonitor } from "./StatusMonitor/SystemStatusMonitor";
-
-import { ProcessController } from "./ProcessController";
-import { util } from "./util";
-
-import { CPuLoadMonitor } from "./StatusMonitor/CPuLoadMonitor";
-import { MemoryMonitorBar } from "./StatusMonitor/MemoryMonitorBar";
-import { MemoryMonitorDetail } from "./StatusMonitor/MemoryMonitorDetail";
-import { MemoryMonitorRate } from "./StatusMonitor/MemoryMonitorRate";
-import { ProcessStatusMonitor } from "./StatusMonitor/ProcessStatusMonitor";
-import { AdditionalMonitor } from "./StatusMonitor/AdditionalMonitor";
-
-export {
-  logger,
-  debuggerLogger,
+  Message_buffer,
   PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  CPU,
-  PStatus,
-  Memory,
-  MemoryAlgorithmNF as MemoryNF,
-  MemoryBlockNF as MemoryBlock,
-  MemoryController,
-  SystemStatusMonitor,
-  ProcessController,
-  util,
-  ProcessStatusMonitor,
+  AdditionalMonitor,
   CPuLoadMonitor,
   MemoryMonitorBar,
   MemoryMonitorDetail,
   MemoryMonitorRate,
-  RunFunctions,
-  AdditionalMonitor,
-};
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "./index";
 
 export class OS {
   /**
@@ -137,8 +120,15 @@ export class OS {
     logger.info("CPU数量：", CPU.CPU_COUNT);
     logger.info("监控最大大小：", OS.PROCESS_NUM_MAX);
     logger.info("超时时间：", CPU.TIME_OUT);
-    logger.info("内存大小：", MemoryController.MEMORY.MEMORY_SIZE, "KB");
-    logger.info("内存分配算法：", config?.software?.MemoryAlgorithm || "NF");
+    logger.info(
+      "内存大小：",
+      MemoryController.MEMORY.MEMORY_SIZE,
+      "KB"
+    );
+    logger.info(
+      "内存分配算法：",
+      config?.software?.MemoryAlgorithm || "NF"
+    );
 
     OS.initif = true;
   }
@@ -157,7 +147,9 @@ export class OS {
      * 程序运行
      */
     logger.info("CPU开始运行");
-    logger.info("-----------------------------------------------------------");
+    logger.info(
+      "-----------------------------------------------------------"
+    );
     SystemStatusMonitor.printHead();
     // 计数器+1
     while (true) {
@@ -169,7 +161,7 @@ export class OS {
       // 定时跳出
       if (CPU.CPUtime > CPU.TIME_OUT && CPU.TIME_OUT != 0) {
         logger.warn("进程执行超时");
-        logger.warn("ReadyList.readyList:", ReadyList.readyList);
+        logger.warn("ReadyList.ReadyList:", ReadyList);
         break;
       }
       // 输出就绪队列

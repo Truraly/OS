@@ -1,22 +1,36 @@
 import {
+  CPU,
   logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  CPU,
-  PStatus,
-  Memory,
-  MemoryBlock,
-  SystemStatusMonitor,
-  debuggerLogger,
-  MemoryController,
-  util,
-  ProcessStatusMonitor,
-  OS,
   AdditionalMonitor,
-} from "./OS";
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "./index";
 
 export class ProcessController {
   /**
@@ -53,7 +67,10 @@ export class ProcessController {
       needTime: time,
       status: PStatus.ready,
       priority: priority,
-      pid: util.formatStr((ProcessController.processCount++).toString(), 5),
+      pid: util.formatStr(
+        (ProcessController.processCount++).toString(),
+        5
+      ),
       front: null,
       mutex: new Semasphore(1, "mutex-" + name),
       sm: new Semasphore(0, "sm-" + name),
@@ -85,7 +102,10 @@ export class ProcessController {
           ProcessStatusMonitor.instance.PCBStatusListHis[0][i] = 1;
         }
         // logger.debug("创建进程", newPCB.pname, "成功");
-        ProcessStatusMonitor.instance?.setShowStatus(newPCB, PStatus.ready);
+        ProcessStatusMonitor.instance?.setShowStatus(
+          newPCB,
+          PStatus.ready
+        );
         newPCB.status = PStatus.ready;
         ReadyList.push(newPCB);
         return newPCB;
@@ -115,8 +135,11 @@ export class ProcessController {
 
     ProcessController.PCBList[index] = null;
     pcb.status = PStatus.deleted;
-    ReadyList.readyList = ReadyList.readyList.filter((item) => item != pcb);
-    if (pcb.memory) MemoryController.memoryAlgorithm.freeMemory(pcb.memory);
+    ReadyList.readyList = ReadyList.readyList.filter(
+      (item) => item != pcb
+    );
+    if (pcb.memory)
+      MemoryController.memoryAlgorithm.freeMemory(pcb.memory);
     debuggerLogger.debug("删除进程", pcb.pname, "成功");
   }
 

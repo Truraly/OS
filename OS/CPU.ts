@@ -1,22 +1,36 @@
-import chalk from "chalk";
 import {
   logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  PStatus,
-  Memory,
-  MemoryBlock,
-  SystemStatusMonitor,
-  ProcessController,
+  AdditionalMonitor,
   CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
   ProcessStatusMonitor,
-  OS,
-  RunFunctions,
-} from "./OS";
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "./index";
 
 export class CPU {
   /**
@@ -89,6 +103,6 @@ export class CPU {
       logger.debug("进程" + p.pname + "执行完毕", p);
     }
     // 更新进程数量
-    CPuLoadMonitor.instance?.setLoad(processCount);
+     CPuLoadMonitor.instance?.setLoad(processCount);
   }
 }

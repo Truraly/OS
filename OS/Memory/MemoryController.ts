@@ -3,22 +3,39 @@
  *
  * 若无特殊说明，内存大小单位均为 KB
  */
+import chalk from "chalk";
 import {
+  CPU,
   logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  Message_buffer,
+  OS,
   PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  CPU,
-  PStatus,
-} from "../OS";
-import chalk from "chalk";
-import { MemoryAlgorithm, MemoryBlock } from "./MemoryAlgorithm";
-import { MemoryAlgorithmNF, MemoryBlockNF } from "./MemoryAlgorithmNF";
-export { MemoryAlgorithmNF, MemoryBlockNF };
-import { MemoryAlgorithmFF, MemoryBlockFF } from "./MemoryAlgorithmFF";
-export { MemoryAlgorithmFF, MemoryBlockFF };
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "../index";
 /**
  * 内存控制对象
  */

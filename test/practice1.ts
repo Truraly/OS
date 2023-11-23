@@ -12,7 +12,7 @@ import {
   SystemStatusMonitor,
   OS,
   ProcessController,
-} from "../OS/OS";
+} from "../OS";
 import chalk from "chalk";
 
 OS.init({

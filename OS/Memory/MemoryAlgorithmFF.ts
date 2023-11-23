@@ -1,6 +1,9 @@
-import { MemoryController } from "./MemoryController";
-import { MemoryAlgorithm, MemoryBlock } from "./MemoryAlgorithm";
-import { debuggerLogger } from "../Logger";
+import {
+    MemoryAlgorithm,
+    MemoryBlock,
+    MemoryController,
+    debuggerLogger,
+} from "../index";
 /**
  * 使用首次适应算法实现内存分配 FF = First Fit
  */
@@ -56,7 +59,7 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
             // 修改指针
             block.next.last = newBlock;
             // 修改指针
-            block.size = size
+            block.size = size;
             block.next = newBlock;
             return block;
           }
@@ -128,7 +131,7 @@ export interface MemoryBlockFF extends MemoryBlock {
  */
 export function checkMemory(memory: MemoryBlockFF) {
   // @ts-ignore
-  if (memory == MemoryController.memoryAlgorithm.HEAD_POINTER) return;
+  if (memory ==MemoryController.memoryAlgorithm.HEAD_POINTER) return;
   //   if (memory.next.last != memory) {
   //     debuggerLogger.error("memory", memory);
   //     throw new Error("内存块指针错误");

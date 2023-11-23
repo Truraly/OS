@@ -15,7 +15,7 @@ import {
   SystemStatusMonitor,
   ProcessStatusMonitor,
   PStatus,
-} from "../OS/OS";
+} from "../OS";
 import chalk from "chalk";
 /////////////////////////////////////////
 // 系统配置

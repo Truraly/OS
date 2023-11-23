@@ -1,27 +1,37 @@
+import chalk from "chalk";
 import {
+  CPU,
   logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
+  PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  CPU,
-  PStatus,
-  Memory,
-  MemoryBlock,
-  ProcessController,
-  MemoryController,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
   util,
-} from "../OS";
-import chalk from "chalk";
-import { ProcessStatusMonitor } from "../OS";
-import { MemoryMonitorBar } from "./MemoryMonitorBar";
-import { MemoryMonitorDetail } from "./MemoryMonitorDetail";
-import { CPuLoadMonitor } from "./CPuLoadMonitor";
-import { MemoryMonitorRate } from "./MemoryMonitorRate";
-import { StatusMonitor } from "./StatusMonitor";
-import { AdditionalMonitor } from "./AdditionalMonitor";
+} from "../index";
 import wcwidth from "wcwidth";
 export class SystemStatusMonitor {
   /**

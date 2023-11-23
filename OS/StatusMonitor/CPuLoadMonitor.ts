@@ -1,14 +1,35 @@
-import chalk from "chalk";
 import {
+  CPU,
+  logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
   PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
   ProcessController,
+  ReadyList,
+  Semasphore,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
   util,
-  OS,
-  CPU,
-} from "../OS";
-import { StatusMonitor } from "./StatusMonitor";
+} from "../index";
 export class CPuLoadMonitor extends StatusMonitor {
   /**
    * 初始化

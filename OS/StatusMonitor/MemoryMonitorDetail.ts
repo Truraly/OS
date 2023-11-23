@@ -1,15 +1,37 @@
 import chalk from "chalk";
 import {
+  CPU,
+  logger,
   debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
   PStatus,
+  RunFunctions,
+  send,
+  P,
+  V,
   ProcessController,
+  ReadyList,
+  Semasphore,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorRate,
+  ProcessStatusMonitor,
+  StatusMonitor,
+  SystemStatusMonitor,
   util,
-  OS,
-  MemoryController,
-  CPU,
-} from "../OS";
-import { StatusMonitor } from "./StatusMonitor";
+} from "../index";
 export class MemoryMonitorDetail extends StatusMonitor {
   /**
    * 单例对象
@@ -34,7 +56,7 @@ export class MemoryMonitorDetail extends StatusMonitor {
    */
   getStatus(): string {
     let str = " ";
-    MemoryController.memoryAlgorithm.forEach((block, index) => {
+   MemoryController.memoryAlgorithm.forEach((block, index) => {
       debuggerLogger.debug("block", block);
       let add = `${block.start} ${block.start + block.size - 1}`;
       str +=

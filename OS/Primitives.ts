@@ -1,16 +1,35 @@
-// 原语列表
 import {
+  CPU,
   logger,
+  debuggerLogger,
+  MemoryAlgorithm,
+  MemoryBlock,
+  MemoryAlgorithmFF,
+  MemoryBlockFF,
+  checkMemory,
+  MemoryAlgorithmNF,
+  MemoryBlockNF,
+  MemoryController,
+  Memory,
+  Message_buffer,
+  OS,
   PCB,
+  PStatus,
+  RunFunctions,
+
+  ProcessController,
   ReadyList,
   Semasphore,
-  Message_buffer,
-  Primitives,
-  PStatus,
-  ProcessController,
-  SystemStatusMonitor,
+  AdditionalMonitor,
+  CPuLoadMonitor,
+  MemoryMonitorBar,
+  MemoryMonitorDetail,
+  MemoryMonitorRate,
   ProcessStatusMonitor,
-} from "./OS";
+  StatusMonitor,
+  SystemStatusMonitor,
+  util,
+} from "./index";
 /**
  * 发送消息原语
  * @param PID 进程标识符
@@ -45,6 +64,7 @@ export function send(PID: string, a: Message_buffer) {
   V(p.sm);
 }
 
+
 /**
  * P原语
  * @param s 信号量
@@ -74,7 +94,10 @@ export function V(s: Semasphore) {
     let p: PCB | undefined = s.queue.shift();
     if (p) {
       p.status = PStatus.ready;
-      ProcessStatusMonitor.instance?.setShowStatus(p, PStatus.blockToReady);
+      ProcessStatusMonitor.instance?.setShowStatus(
+        p,
+        PStatus.blockToReady
+      );
       ReadyList.rePush(p);
     }
   }
