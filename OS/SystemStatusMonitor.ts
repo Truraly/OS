@@ -328,7 +328,7 @@ export class SystemStatusMonitor {
       MemoryController.MEMORY.MEMORY_SIZE /
       SystemStatusMonitor.MEMORY_BAR_LENGTH;
     // 统计每一段内存被占用的数量
-    let arr = new Array(SystemStatusMonitor.MEMORY_BAR_LENGTH - 1).fill(0);
+    let arr = new Array(SystemStatusMonitor.MEMORY_BAR_LENGTH).fill(0);
     MemoryController.memoryAlgorithm.forEach((block, index) => {
       // logger.warn(block.status);
       if (block.status == 0) return;
