@@ -23,12 +23,18 @@ export class SystemStatusMonitor {
   /**
    * 需要监控的属性
    */
-  static Mon: Array<"PCB" | "MemoryDetail" | "MemoryBar" | "Load">;
+  static Mon: Array<
+    "PCB" | "MemoryDetail" | "MemoryBar" | "Load" | "MemoryRate"
+  >;
   /**
    * 打印状态
    */
   static printSystemStatus() {
-    let str = `| ${o_t_t(CPU.CPUtime)} |`;
+    debuggerLogger.debug("CPU.CPUtime", CPU.CPUtime);
+    let str = `| ${SystemStatusMonitor.formatStr(
+      Math.floor(CPU.CPUtime % 1000).toString(),
+      3
+    )} |`;
     SystemStatusMonitor.Mon.forEach((item) => {
       switch (item) {
         case "PCB":
@@ -43,15 +49,24 @@ export class SystemStatusMonitor {
         case "Load":
           str += SystemStatusMonitor.getLoad();
           break;
+        case "MemoryRate":
+          str += SystemStatusMonitor.getMemoryRet();
+          break;
       }
     });
     logger.info(str);
+
+    // 删除需要删除的进程
+    SystemStatusMonitor.delPCB.forEach((item) => {
+      ProcessController.deletePCB(item);
+    });
+    SystemStatusMonitor.delPCB = new Array<PCB>();
   }
   /**
    * 打印表头
    */
   static printSystemStatusHead() {
-    let str = `|时间|`;
+    let str = `|时间 |`;
     SystemStatusMonitor.Mon.forEach((item) => {
       switch (item) {
         case "PCB":
@@ -75,6 +90,9 @@ export class SystemStatusMonitor {
             str += " ";
           }
           str += "|";
+          break;
+        case "MemoryRate":
+          str += "MRate |";
           break;
       }
     });
@@ -114,6 +132,10 @@ export class SystemStatusMonitor {
       if (p == null) {
         SystemStatusMonitor.PCBStatusListHis[0][i] = PStatus.empty;
         continue;
+      } else if (
+        SystemStatusMonitor.PCBStatusListHis[0][i] == PStatus.runToBlock
+      ) {
+        SystemStatusMonitor.PCBStatusListHis[0][i] = PStatus.block;
       }
     }
     debuggerLogger.info(
@@ -268,6 +290,10 @@ export class SystemStatusMonitor {
   /// 内存状态监控
   ////////////////////////
   /**
+   * 需要删除的进程
+   */
+  static delPCB = new Array<PCB>();
+  /**
    * 内存条长度
    */
   static MEMORY_BAR_LENGTH = 50;
@@ -278,6 +304,7 @@ export class SystemStatusMonitor {
   static getMemoryDetail(ret: boolean = false) {
     let str = "";
     MemoryController.memoryAlgorithm.forEach((block, index) => {
+      debuggerLogger.debug("block", block);
       let add = `${block.start} ${block.start + block.size - 1}`;
       str +=
         `|` +
@@ -301,7 +328,7 @@ export class SystemStatusMonitor {
       MemoryController.MEMORY.MEMORY_SIZE /
       SystemStatusMonitor.MEMORY_BAR_LENGTH;
     // 统计每一段内存被占用的数量
-    let arr = new Array(SystemStatusMonitor.MEMORY_BAR_LENGTH).fill(0);
+    let arr = new Array(SystemStatusMonitor.MEMORY_BAR_LENGTH - 1).fill(0);
     MemoryController.memoryAlgorithm.forEach((block, index) => {
       // logger.warn(block.status);
       if (block.status == 0) return;
@@ -324,7 +351,22 @@ export class SystemStatusMonitor {
       }
     });
     if (!ret) logger.info("内存:", str);
-    else return str;
+    else return str + "|";
+  }
+  /**
+   * 获取内存使用率,返回百分比,保留1位小数
+   */
+  static getMemoryRet() {
+    let UseCount = 0;
+    MemoryController.memoryAlgorithm.forEach((block, index) => {
+      if (block.status == 1) UseCount += block.size;
+    });
+    return SystemStatusMonitor.formatStr(
+      (
+        Math.round((UseCount / MemoryController.MEMORY.MEMORY_SIZE) * 1000) / 10
+      ).toString() + "%",
+      6
+    );
   }
   ///////////////////////////////////////////////
   // 负载监控
@@ -399,7 +441,7 @@ const STATUS_COLOR: Array<{
     color: chalk.bgHex("#006638").bold(" "),
   },
   {
-    PStatus: PStatus.blockToReady,
+    PStatus: PStatus.runToBlock,
     name_: "运作转阻塞",
     color: chalk.bgHex("#eb6600").bold(" "),
   },

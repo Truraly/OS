@@ -27,7 +27,8 @@ Log4js.configure({
     },
     debugger: {
       appenders: ["file"],
-      level: "debug",
+      //   level: "debug",
+      level: "warn",
     },
   },
 });

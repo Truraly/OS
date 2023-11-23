@@ -78,7 +78,8 @@ export class CPU {
         debuggerLogger.debug("进程", p.pname, "执行完毕");
         SystemStatusMonitor.setShowStatus(p, PStatus.finish);
         debuggerLogger.debug("释放进程", p.pname, "的内存");
-        ProcessController.deletePCB(p);
+        // ProcessController.deletePCB(p);
+        SystemStatusMonitor.delPCB.push(p);
       }
       logger.debug("进程" + p.pname + "执行完毕", p);
     }

@@ -1,5 +1,6 @@
 import { MemoryController } from "./MemoryController";
 import { MemoryAlgorithm, MemoryBlock } from "./MemoryAlgorithm";
+import { debuggerLogger } from "../Logger";
 /**
  * 使用首次适应算法实现内存分配 FF = First Fit
  */
@@ -23,7 +24,6 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
     };
     this.HEAD_POINTER.last = this.HEAD_POINTER;
     this.HEAD_POINTER.next = this.HEAD_POINTER;
-    this.HEAD_POINTER = this.HEAD_POINTER;
   }
 
   /**
@@ -33,7 +33,6 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
    * @returns 分配块 如果分配失败则返回null
    */
   distributeMemory(size: number, pid: number): MemoryBlockFF | null {
-    // logger.info("start Memory.MEMORY_POINTER", Memory.MEMORY_POINTER.start);
     return (
       this.forEach((block: MemoryBlockFF, index) => {
         if (block.status == 0 && block.size >= size) {
@@ -42,7 +41,7 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
           block.pid = pid;
           // 如果大小合适,直接返回
           if (block.size == size) return block;
-          // 如果大小不等
+          // 如果大小不等,分割块
           else {
             let newBlock: MemoryBlockFF = {
               start: block.start + size,
@@ -55,9 +54,9 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
             // 前后合并
             newBlock = this.freeMemory(newBlock);
             // 修改指针
-            block.next.last = block;
+            block.next.last = newBlock;
             // 修改指针
-            block.size = size;
+            block.size = size
             block.next = newBlock;
             return block;
           }
@@ -106,6 +105,7 @@ export class MemoryAlgorithmFF extends MemoryAlgorithm {
       let res = callback(pointer, index++);
       if (res) return res;
       pointer = pointer.next;
+      checkMemory(pointer);
     }
   }
 }
@@ -122,4 +122,34 @@ export interface MemoryBlockFF extends MemoryBlock {
    * 下一个
    */
   next: MemoryBlockFF;
+}
+/**
+ * 检查内存是否合法
+ */
+export function checkMemory(memory: MemoryBlockFF) {
+  // @ts-ignore
+  if (memory == MemoryController.memoryAlgorithm.HEAD_POINTER) return;
+  //   if (memory.next.last != memory) {
+  //     debuggerLogger.error("memory", memory);
+  //     throw new Error("内存块指针错误");
+  //   }
+  //   if (memory.last.next != memory) {
+  //     debuggerLogger.error("memory", memory);
+  //     throw new Error("内存块指针错误");
+  //   }
+  // if (memory.next.start < memory.start) {
+  //   debuggerLogger.error("memory", memory);
+  //   throw new Error("内存块指针错误");
+  // }
+  // if (memory.last.start > memory.start) {
+  //   debuggerLogger.error("memory", memory);
+  //   throw new Error("内存块指针错误");
+  // }
+  if (
+    memory.next.start != memory.start + memory.size &&
+    memory.next.start != 0
+  ) {
+    debuggerLogger.error("memory", memory);
+    throw new Error("内存块指针错误");
+  }
 }

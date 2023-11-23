@@ -14,6 +14,7 @@ import {
   Memory,
   OS,
   SystemStatusMonitor,
+  ProcessController,
 } from "../OS/OS";
 import chalk from "chalk";
 /////////////////////////////////////////
@@ -24,6 +25,7 @@ OS.init({
   },
   software: {
     TimeOut: 0,
+    MemoryAlgorithm: "NF",
   },
 });
 ////////////////////////////////////////
@@ -98,11 +100,11 @@ const reader: Array<(p: PCB) => number> = [
 ];
 
 // 主函数
-CPU.start(
+OS.start(
   () => true,
   async () => {
     // await sleep(100);
-    await OS.sleep(1);
+    await OS.sleep(100);
     // 载入就绪的进程
     if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 随机数
@@ -118,17 +120,17 @@ CPU.start(
     // 填充空格
     while (pname.length < 5) pname += " ";
     // 颜色
-    if (type == "w") {
-      pname = chalk.white.bgBlue.bold(pname);
-    } else {
-      pname = chalk.white.bgMagenta.bold(pname);
-    }
-    PCB.createPCB(
+    // if (type == "w") {
+    //   pname = chalk.white.bgBlue.bold(pname);
+    // } else {
+    //   pname = chalk.white.bgMagenta.bold(pname);
+    // }
+    ProcessController.createPCB(
       pname,
       sleeptime,
       type == "w" ? writer : reader,
       0,
-      type == "w" ? 3 : 6
+      type == "w" ? 11 : 5
     );
     return true;
   }

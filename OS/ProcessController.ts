@@ -22,7 +22,7 @@ export class ProcessController {
   /**
    * 进程计数
    */
-  static processCount = 0;
+  static processCount = 1;
   /**
    * 创建进程
    * @param name 进程名

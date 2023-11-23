@@ -60,7 +60,7 @@ export class MemoryAlgorithmNF extends MemoryAlgorithm {
             // 前后合并
             newBlock = this.freeMemory(newBlock);
             // 修改指针
-            block.next.last = block;
+            block.next.last = newBlock;
             // 修改指针
             block.size = size;
             block.next = newBlock;
@@ -113,6 +113,7 @@ export class MemoryAlgorithmNF extends MemoryAlgorithm {
       let res = callback(pointer, index++);
       if (res) return res;
       pointer = pointer.next;
+      
     }
   }
 }
@@ -130,3 +131,4 @@ export interface MemoryBlockNF extends MemoryBlock {
    */
   next: MemoryBlockNF;
 }
+

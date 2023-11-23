@@ -55,13 +55,17 @@ export interface Software {
    * 内存分配算法
    */
   MemoryAlgorithm: "NF" | "FF";
+  /**
+   * 内存条长度
+   */
+  MemoryBarLength: number;
 }
 
 export interface LogConfig {
   /**
    * 显示进程状态
    */
-  showStatus: boolean;
+  showProcessStatus: boolean;
   /**
    * 显示CPU负载
    */
@@ -74,6 +78,10 @@ export interface LogConfig {
    * 显示内存状态（具体地址）
    */
   showMemoryDetail: boolean;
+  /**
+   * 显示内存条
+   */
+  showMemoryRate: boolean;
 }
 
 export class OS {
@@ -94,16 +102,22 @@ export class OS {
     software?: {
       TimeOut?: number;
       MemoryAlgorithm?: "NF" | "FF";
+      MemoryBarLength?: number;
     };
     log?: {
       showCPULoad?: boolean;
       showMemory?: boolean;
       showMemoryDetail?: boolean;
       showProcessStatus?: boolean;
+      showMemoryRate?: boolean;
     };
   }) {
     // 提供默认配置
-    let config_ = {
+    let config_: {
+      hardware: Hardware;
+      software: Software;
+      log: LogConfig;
+    } = {
       hardware: Object.assign(
         {
           CpuCount: 1,
@@ -116,6 +130,7 @@ export class OS {
         {
           TimeOut: 0,
           MemoryAlgorithm: "NF",
+          MemoryBarLength: 50,
         },
         config?.software || {}
       ),
@@ -125,12 +140,11 @@ export class OS {
           showMemory: true,
           showMemoryDetail: true,
           showProcessStatus: true,
+          showMemoryRate: true,
         },
         config?.log || {}
       ),
     };
-
-    console.log(config_);
     CPU.CPU_COUNT = config_.hardware.CpuCount;
     ProcessController.init(config_.hardware.MaxPCB);
     MemoryController.init(config_.software.MemoryAlgorithm);
@@ -138,11 +152,14 @@ export class OS {
     ReadyList.init();
 
     SystemStatusMonitor.Mon = [];
+
     if (config_.log.showProcessStatus) SystemStatusMonitor.Mon.push("PCB");
     if (config_.log.showCPULoad) SystemStatusMonitor.Mon.push("Load");
     if (config_.log.showMemory) SystemStatusMonitor.Mon.push("MemoryBar");
+    if (config_.log.showMemoryRate) SystemStatusMonitor.Mon.push("MemoryRate");
     if (config_.log.showMemoryDetail)
       SystemStatusMonitor.Mon.push("MemoryDetail");
+    SystemStatusMonitor.MEMORY_BAR_LENGTH = config_.software.MemoryBarLength;
 
     // 打印配置信息
     logger.info("CPU数量：", CPU.CPU_COUNT);

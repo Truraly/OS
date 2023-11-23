@@ -9,14 +9,25 @@ import {
   Primitives,
   CPU,
   Memory,
-  SystemStatusMonitor
+  SystemStatusMonitor,
+  OS,
+  ProcessController,
 } from "../OS/OS";
 import chalk from "chalk";
 
-CPU.CPU_COUNT = 10;
-PCB.init();
-Memory.init();
-SystemStatusMonitor.ewif = true;
+OS.init({
+  hardware: {
+    CpuCount: 1,
+    MaxPCB: 5,
+  },
+  software: {
+    TimeOut: 0,
+    MemoryAlgorithm: "NF",
+  },
+  log: {
+    // showCPULoad:false,
+  },
+});
 /**
  * 写者进程函数
  */
@@ -89,8 +100,7 @@ logger.info(test);
  */
 let readcount = 0;
 // 主函数
-CPU.start(
-  () => true,
+OS.start(
   () => {
     if (!SystemStatusMonitor.getLogsEmpty()) return true;
     // 载入就绪的进程
@@ -105,13 +115,13 @@ CPU.start(
       pname = pname.slice(0, 4);
       // 填充空格
       while (pname.length < 5) pname += " ";
-      // 颜色
-      if (type == "w") {
-        pname = chalk.white.bgBlue.bold(pname);
-      } else {
-        pname = chalk.white.bgMagenta.bold(pname);
-      }
-      let newPCB = PCB.createPCB(
+    //   // 颜色
+    //   if (type == "w") {
+    //     pname = chalk.white.bgBlue.bold(pname);
+    //   } else {
+    //     pname = chalk.white.bgMagenta.bold(pname);
+    //   }
+      let newPCB = ProcessController.createPCB(
         pname,
         sleeptime,
         type == "w" ? writer : reader,
@@ -126,6 +136,9 @@ CPU.start(
     // 结束
 
     if (test.length == 0 && ReadyList.len() == 0) return false;
+    return true;
+  },
+  () => {
     return true;
   }
 );

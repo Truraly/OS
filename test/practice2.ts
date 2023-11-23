@@ -9,12 +9,26 @@ import {
   Primitives,
   CPU,
   Memory,
+  OS,
+  ProcessController,
 } from "../OS/OS";
 import chalk from "chalk";
-CPU.CPU_COUNT = 1;
-PCB.ewif = true;
-PCB.init();
-Memory.init();
+
+OS.init({
+  hardware: {
+    CpuCount: 1,
+    MaxPCB: 5,
+  },
+  software: {
+    TimeOut: 0,
+    MemoryAlgorithm: "NF",
+    MemoryBarLength: 20,
+  },
+  log: {
+    // showCPULoad:false,
+  },
+});
+
 // time priority
 // 2 1
 // 3 10
@@ -36,22 +50,19 @@ const pro: Array<(p: PCB) => number> = [
     return 1;
   },
 ];
-// 创建进程
-[
-  PCB.createPCB("p1   ", 2, pro, 1, 23),
-  PCB.createPCB("p2   ", 3, pro, 10, 10),
-  PCB.createPCB("p3   ", 1, pro, 6, 5),
-  PCB.createPCB("p4   ", 2, pro, 9, 2),
-  PCB.createPCB("p5   ", 4, pro, 4, 8),
-].forEach((p) => {
-  logger.debug(p);
-  if (p == null) return;
-  ReadyList.push(p);
-});
 
 // 运行
-CPU.start(
-  () => true,
+OS.start(
+  () => {
+    if (CPU.CPUtime == 0) {
+      ProcessController.createPCB("p1   ", 2, pro, 1, 23);
+      ProcessController.createPCB("p2   ", 3, pro, 10, 10);
+      ProcessController.createPCB("p3   ", 1, pro, 6, 5);
+      ProcessController.createPCB("p4   ", 2, pro, 9, 2);
+      ProcessController.createPCB("p5   ", 4, pro, 4, 8);
+    }
+    return true;
+  },
   () => {
     // 结束
     if (ReadyList.len() == 0) return false;
