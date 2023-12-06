@@ -24,7 +24,7 @@ OS.init({
   },
   software: {
     TimeOut: 0,
-    MemoryAlgorithm: "FF",
+    MemoryAlgorithm: "NF",
     MemoryBarLength: 20,
   },
 });
@@ -103,7 +103,7 @@ const reader: Array<(p: PCB) => number> = [
 OS.start(
   async () => {
     // await sleep(100);
-    await OS.sleep(10);
+    await OS.sleep(50);
     // 载入就绪的进程
     if (!ProcessController.getLogsEmpty()) return true;
     // 随机数

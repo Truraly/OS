@@ -113,7 +113,6 @@ export class MemoryAlgorithmNF extends MemoryAlgorithm {
       let res = callback(pointer, index++);
       if (res) return res;
       pointer = pointer.next;
-      
     }
   }
 }
