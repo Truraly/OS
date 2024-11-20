@@ -109,8 +109,8 @@ const reader: Array<RunFunction> = [
 // 主函数
 OS.start(
   async () => {
+    // await sleep(100);
     await OS.sleep(100);
-    // await OS.sleep(10);
     // 载入就绪的进程
     if (!ProcessController.getLogsEmpty()) return true;
     // 随机数
