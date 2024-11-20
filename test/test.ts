@@ -27,7 +27,7 @@ OS.init({
   },
   software: {
     TimeOut: 0,
-    MemoryAlgorithm: "FF",
+    MemoryAlgorithm: "NF",
     MemoryBarLength: 20,
   },
   log: {

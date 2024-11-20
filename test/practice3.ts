@@ -64,6 +64,16 @@ OS.start(
   },
   () => {
     // 结束
-    return !(CPU.CPUtime > 5 && OS.checkNoTask());
+    if (
+      ReadyList.len() == 0 &&
+      ProcessStatusMonitor.instance.PCBStatusListHis[0].every(
+        (item) => item == 0
+      ) &&
+      CPU.CPUtime > 5
+    ) {
+      return false;
+    }
+    return true;
+    // return !(CPU.CPUtime > 5 && OS.checkNoTask());
   }
 );
